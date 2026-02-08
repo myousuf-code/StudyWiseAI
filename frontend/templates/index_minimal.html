@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyWise AI - Transform Your Learning Journey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        
+        /* Navigation */
+        nav {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 0;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            min-height: 64px;
+        }
+        
+        .logo {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        .nav-links {
+            display: none;
+            gap: 2rem;
+            margin-left: 3rem;
+        }
+        
+        .nav-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        
+        .nav-links a:hover {
+            color: #2563eb;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+        }
+        
+        .btn-purple {
+            background-color: #8b5cf6;
+            color: white;
+        }
+        
+        .btn-purple:hover {
+            background-color: #7c3aed;
+        }
+        
+        .btn-red {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-red:hover {
+            background-color: #dc2626;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 5rem 1.5rem;
+        }
+        
+        .hero-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .hero .btn {
+            font-size: 1rem;
+            padding: 1rem 2rem;
+        }
+        
+        .btn-white {
+            background: white;
+            color: #2563eb;
+        }
+        
+        .btn-white:hover {
+            background: #f1f5f9;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-outline:hover {
+            background: white;
+            color: #2563eb;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            padding: 3rem 1.5rem;
+            background: white;
+        }
+        
+        .actions-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .action-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .action-card .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .action-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+        
+        .action-card p {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+            padding: 0.25rem;
+        }
+        
+        .close-btn:hover {
+            color: #1e293b;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-text {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 1rem;
+        }
+        
+        .form-link {
+            color: #3b82f6;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .form-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .nav-links {
+                display: flex;
+            }
+            
+            .hero h1 {
+                font-size: 4rem;
+            }
+            
+            .nav-buttons {
+                gap: 1rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero {
+                padding: 3rem 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .hero .btn {
+                width: 200px;
+            }
+            
+            .nav-buttons {
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">StudyWise AI</div>
+            
+            <div class="nav-links">
+                <a href="#" class="active">Home</a>
+                <a href="#features">Features</a>
+                <a href="#dashboard">Dashboard</a>
+                <a href="#contact">Contact</a>
+            </div>
+            
+            <div class="nav-buttons">
+                <div id="userSection" class="hidden">
+                    <span id="username" class="mr-4">Welcome back!</span>
+                    <button id="dashboardBtn" class="btn btn-purple">📊 Dashboard</button>
+                    <button id="logoutBtn" class="btn btn-red">Logout</button>
+                </div>
+                <div id="guestSection">
+                    <button id="loginBtn" class="btn btn-primary">Login</button>
+                    <button id="registerBtn" class="btn btn-success">Register</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1>Welcome to StudyWise AI</h1>
+            <p>Transform your learning journey with AI-powered study plans, smart reminders, and personalized insights</p>
+            <div class="hero-buttons">
+                <button id="startLearningBtn" class="btn btn-white">🚀 Start Learning</button>
+                <button id="askAiBtn" class="btn btn-outline">💬 Ask AI Assistant</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+        <div class="actions-container">
+            <div class="actions-grid">
+                <div class="action-card">
+                    <div class="icon">⚡</div>
+                    <h3>Quick Study</h3>
+                    <p>Start a 25-minute focused session right now</p>
+                    <button id="quickStudyBtn" class="btn btn-primary" style="width: 100%;">Start Session</button>
+                </div>
+                <div class="action-card">
+                    <div class="icon">💬</div>
+                    <h3>Ask AI</h3>
+                    <p>Get instant study tips and answers</p>
+                    <button class="btn btn-success" style="width: 100%;" onclick="openChatModal()">Ask Question</button>
+                </div>
+                <div class="action-card">
+                    <div class="icon">📈</div>
+                    <h3>View Progress</h3>
+                    <p>Check your learning statistics</p>
+                    <button id="viewProgressBtn" class="btn btn-purple" style="width: 100%;">View Stats</button>
+                </div>
+                <div class="action-card">
+                    <div class="icon">🔔</div>
+                    <h3>Study Planner</h3>
+                    <p>Create personalized study schedules</p>
+                    <button id="studyPlannerBtn" class="btn" style="width: 100%; background: #f97316; color: white;">Create Plan</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="authTitle" class="modal-title">Login to StudyWise AI</h3>
+                <button id="closeAuthModal" class="close-btn">&times;</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                <p class="form-text">
+                    Don't have an account? 
+                    <span id="switchToRegister" class="form-link">Register here</span>
+                </p>
+            </form>
+            
+            <!-- Register Form (hidden by default) -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="registerFullName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="registerUsername" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="registerEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="registerPassword" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Register</button>
+                <p class="form-text">
+                    Already have an account? 
+                    <span id="switchToLogin" class="form-link">Login here</span>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Chat Modal -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">AI Study Assistant</h3>
+                <button id="closeChatModal" class="close-btn">&times;</button>
+            </div>
+            <div id="chatMessages" style="height: 300px; overflow-y: auto; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 1rem;">
+                <div style="text-align: center; color: #64748b;">
+                    Ask me anything about studying! I'm here to help.
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <input id="chatInput" type="text" placeholder="Ask a question..." 
+                       class="form-input" style="flex: 1; margin-bottom: 0;">
+                <button id="sendMessage" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Selection Modal -->
+    <div id="subjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Choose Study Subject</h3>
+                <button id="closeSubjectModal" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Select Subject Category</label>
+                <select id="subjectCategory" class="form-input">
+                    <option value="">Choose category...</option>
+                    <option value="mathematics">Mathematics</option>
+                    <option value="science">Science</option>
+                    <option value="language">Language Arts</option>
+                    <option value="history">History</option>
+                    <option value="programming">Programming</option>
+                    <option value="business">Business</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Specific Topic (optional)</label>
+                <input type="text" id="specificTopic" class="form-input" placeholder="e.g., Calculus, Spanish Grammar, React Components">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Session Duration</label>
+                <select id="sessionDuration" class="form-input">
+                    <option value="25">25 minutes (Pomodoro)</option>
+                    <option value="30">30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="90">1.5 hours</option>
+                    <option value="120">2 hours</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Study Goal</label>
+                <textarea id="studyGoal" class="form-input" rows="3" placeholder="What do you want to accomplish in this session?"></textarea>
+            </div>
+            
+            <button id="startSessionBtn" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Start Study Session</button>
+        </div>
+    </div>
+
+    <!-- Active Study Session Modal -->
+    <div id="activeSessionModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📚 Active Study Session</h3>
+                <button id="closeActiveSession" class="close-btn">&times;</button>
+            </div>
+            
+            <!-- Timer Display -->
+            <div style="text-align: center; margin: 2rem 0;">
+                <div id="timerDisplay" style="font-size: 4rem; font-weight: bold; color: #3b82f6; font-family: monospace;">25:00</div>
+                <div id="sessionInfo" style="color: #64748b; margin: 1rem 0;">Mathematics - Calculus</div>
+                <div id="sessionGoal" style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; font-size: 0.9rem;">Goal: Review derivative rules and practice problems</div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div style="background: #e5e7eb; height: 8px; border-radius: 4px; margin: 1rem 0; overflow: hidden;">
+                <div id="progressBar" style="background: linear-gradient(90deg, #3b82f6, #10b981); height: 100%; width: 0%; transition: width 1s ease;"></div>
+            </div>
+            
+            <!-- Controls -->
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="pauseResumeBtn" class="btn btn-success">⏸️ Pause</button>
+                <button id="stopSessionBtn" class="btn btn-red">⏹️ Stop</button>
+                <button id="addTimeBtn" class="btn" style="background: #8b5cf6; color: white;">+5 min</button>
+            </div>
+            
+            <!-- Session Notes -->
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label class="form-label">Session Notes</label>
+                <textarea id="sessionNotes" class="form-input" rows="3" placeholder="Take notes about what you learned..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Planner Modal -->
+    <div id="studyPlanModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📅 Study Planner</h3>
+                <button id="closeStudyPlanModal" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Plan Name</label>
+                <input type="text" id="planName" class="form-input" placeholder="e.g., Final Exam Preparation">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Target Subject</label>
+                    <select id="planSubject" class="form-input">
+                        <option value="">Choose subject...</option>
+                        <option value="mathematics">Mathematics</option>
+                        <option value="science">Science</option>
+                        <option value="language">Language Arts</option>
+                        <option value="history">History</option>
+                        <option value="programming">Programming</option>
+                        <option value="business">Business</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Target Date</label>
+                    <input type="date" id="planTargetDate" class="form-input">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Study Schedule</label>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0.5rem 0;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planMon"> Monday</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planTue"> Tuesday</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planWed"> Wednesday</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planThu"> Thursday</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planFri"> Friday</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planSat"> Saturday</label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;"><input type="checkbox" id="planSun"> Sunday</label>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Preferred Time</label>
+                    <select id="planTime" class="form-input">
+                        <option value="morning">Morning (6-12 PM)</option>
+                        <option value="afternoon">Afternoon (12-6 PM)</option>
+                        <option value="evening">Evening (6-10 PM)</option>
+                        <option value="night">Night (10 PM+)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Session Length</label>
+                    <select id="planSessionLength" class="form-input">
+                        <option value="30">30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Study Goals & Topics</label>
+                <textarea id="planGoals" class="form-input" rows="4" placeholder="List specific topics to cover and learning objectives..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button id="createPlanBtn" class="btn btn-primary" style="flex: 1;">Create Study Plan</button>
+                <button id="viewPlansBtn" class="btn" style="background: #8b5cf6; color: white;">View My Plans</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Dashboard Modal -->
+    <div id="progressModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📊 Your Study Progress</h3>
+                <button id="closeProgressModal" class="close-btn">&times;</button>
+            </div>
+            
+            <!-- Stats Overview -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <div style="background: linear-gradient(135deg, #3b82f6, #1e40af); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">0</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Total Hours</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #10b981, #047857); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">0</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Sessions</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">0</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Day Streak</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 1.5rem; border-radius: 0.75rem; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">0</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9;">Subjects</div>
+                </div>
+            </div>
+            
+            <!-- Recent Sessions -->
+            <div style="background: #f8fafc; padding: 1.5rem; border-radius: 0.75rem; margin: 1rem 0;">
+                <h4 style="margin-bottom: 1rem; color: #1e293b;">📚 Recent Sessions</h4>
+                <div id="recentSessions" style="color: #64748b; text-align: center; padding: 2rem;">
+                    No study sessions recorded yet. Start your first session to see progress here!
+                </div>
+            </div>
+            
+            <!-- Active Plans -->
+            <div style="background: #f0f9ff; padding: 1.5rem; border-radius: 0.75rem; margin: 1rem 0;">
+                <h4 style="margin-bottom: 1rem; color: #1e293b;">📅 Active Study Plans</h4>
+                <div id="activePlans" style="color: #64748b; text-align: center; padding: 2rem;">
+                    No active study plans. Create your first plan to stay organized!
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', path='/js/app.js') }}?v=2.0"></script>
+    <script>
+        // StudyWise AI - Enhanced functionality with Quick Study features
+        
+        class StudySessionManager {
+            constructor() {
+                this.currentSession = null;
+                this.timer = null;
+                this.timeRemaining = 0;
+                this.isRunning = false;
+                this.sessions = JSON.parse(localStorage.getItem('studySessions') || '[]');
+                this.studyPlans = JSON.parse(localStorage.getItem('studyPlans') || '[]');
+                this.stats = JSON.parse(localStorage.getItem('studyStats') || JSON.stringify({
+                    totalMinutes: 0,
+                    totalSessions: 0,
+                    streak: 0,
+                    subjects: new Set()
+                }));
+            }
+            
+            startSession(subject, topic, duration, goal) {
+                this.currentSession = {
+                    id: Date.now(),
+                    subject: subject,
+                    topic: topic,
+                    duration: duration,
+                    goal: goal,
+                    startTime: new Date(),
+                    notes: '',
+                    completed: false
+                };
+                
+                this.timeRemaining = duration * 60; // Convert to seconds
+                this.updateTimerDisplay();
+                this.updateSessionInfo();
+                
+                // Show active session modal
+                document.getElementById('subjectModal').classList.remove('show');
+                document.getElementById('activeSessionModal').classList.add('show');
+                
+                this.startTimer();
+                console.log('Study session started:', this.currentSession);
+            }
+            
+            startTimer() {
+                this.isRunning = true;
+                document.getElementById('pauseResumeBtn').textContent = '⏸️ Pause';
+                
+                this.timer = setInterval(() => {
+                    if (this.timeRemaining > 0) {
+                        this.timeRemaining--;
+                        this.updateTimerDisplay();
+                        this.updateProgressBar();
+                    } else {
+                        this.completeSession();
+                    }
+                }, 1000);
+            }
+            
+            pauseTimer() {
+                if (this.isRunning) {
+                    clearInterval(this.timer);
+                    this.isRunning = false;
+                    document.getElementById('pauseResumeBtn').textContent = '▶️ Resume';
+                } else {
+                    this.startTimer();
+                }
+            }
+            
+            stopSession() {
+                if (confirm('Are you sure you want to stop this session? Progress will be saved.')) {
+                    clearInterval(this.timer);
+                    this.saveSession(false);
+                    this.resetSession();
+                }
+            }
+            
+            completeSession() {
+                clearInterval(this.timer);
+                this.currentSession.notes = document.getElementById('sessionNotes').value;
+                this.saveSession(true);
+                
+                // Show completion message
+                alert(`🎉 Session completed! Great job studying ${this.currentSession.subject}!`);
+                this.resetSession();
+            }
+            
+            saveSession(completed) {
+                if (!this.currentSession) return;
+                
+                const timeStudied = (this.currentSession.duration * 60 - this.timeRemaining) / 60;
+                this.currentSession.endTime = new Date();
+                this.currentSession.timeStudied = timeStudied;
+                this.currentSession.completed = completed;
+                this.currentSession.notes = document.getElementById('sessionNotes').value;
+                
+                // Add to sessions array
+                this.sessions.unshift(this.currentSession);
+                if (this.sessions.length > 50) this.sessions = this.sessions.slice(0, 50); // Keep last 50 sessions
+                
+                // Update stats
+                this.stats.totalMinutes += timeStudied;
+                this.stats.totalSessions++;
+                this.stats.subjects.add(this.currentSession.subject);
+                
+                // Save to localStorage
+                localStorage.setItem('studySessions', JSON.stringify(this.sessions));
+                localStorage.setItem('studyStats', JSON.stringify({
+                    ...this.stats,
+                    subjects: Array.from(this.stats.subjects)
+                }));
+                
+                console.log('Session saved:', this.currentSession);
+            }
+            
+            resetSession() {
+                this.currentSession = null;
+                this.timeRemaining = 0;
+                this.isRunning = false;
+                clearInterval(this.timer);
+                document.getElementById('activeSessionModal').classList.remove('show');
+                document.getElementById('sessionNotes').value = '';
+            }
+            
+            updateTimerDisplay() {
+                const minutes = Math.floor(this.timeRemaining / 60);
+                const seconds = this.timeRemaining % 60;
+                document.getElementById('timerDisplay').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateSessionInfo() {
+                if (!this.currentSession) return;
+                
+                const topicText = this.currentSession.topic ? ` - ${this.currentSession.topic}` : '';
+                document.getElementById('sessionInfo').textContent = 
+                    `${this.currentSession.subject}${topicText}`;
+                document.getElementById('sessionGoal').textContent = 
+                    `Goal: ${this.currentSession.goal || 'Focus and learn effectively'}`;
+            }
+            
+            updateProgressBar() {
+                if (!this.currentSession) return;
+                
+                const totalSeconds = this.currentSession.duration * 60;
+                const progress = ((totalSeconds - this.timeRemaining) / totalSeconds) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+            }
+            
+            addTime() {
+                this.timeRemaining += 300; // Add 5 minutes
+                this.currentSession.duration += 5;
+                this.updateTimerDisplay();
+                console.log('Added 5 minutes to session');
+            }
+            
+            createStudyPlan() {
+                const plan = {
+                    id: Date.now(),
+                    name: document.getElementById('planName').value,
+                    subject: document.getElementById('planSubject').value,
+                    targetDate: document.getElementById('planTargetDate').value,
+                    schedule: {
+                        monday: document.getElementById('planMon').checked,
+                        tuesday: document.getElementById('planTue').checked,
+                        wednesday: document.getElementById('planWed').checked,
+                        thursday: document.getElementById('planThu').checked,
+                        friday: document.getElementById('planFri').checked,
+                        saturday: document.getElementById('planSat').checked,
+                        sunday: document.getElementById('planSun').checked,
+                    },
+                    preferredTime: document.getElementById('planTime').value,
+                    sessionLength: parseInt(document.getElementById('planSessionLength').value),
+                    goals: document.getElementById('planGoals').value,
+                    created: new Date(),
+                    active: true
+                };
+                
+                this.studyPlans.unshift(plan);
+                localStorage.setItem('studyPlans', JSON.stringify(this.studyPlans));
+                
+                alert('📅 Study plan created successfully! You can view it in your progress dashboard.');
+                document.getElementById('studyPlanModal').classList.remove('show');
+                this.clearPlanForm();
+                
+                console.log('Study plan created:', plan);
+            }
+            
+            clearPlanForm() {
+                document.getElementById('planName').value = '';
+                document.getElementById('planSubject').value = '';
+                document.getElementById('planTargetDate').value = '';
+                document.getElementById('planGoals').value = '';
+                document.querySelectorAll('#studyPlanModal input[type=\"checkbox\"]').forEach(cb => cb.checked = false);
+            }
+            
+            loadProgressData() {
+                // Update stats display
+                const stats = JSON.parse(localStorage.getItem('studyStats') || '{}');
+                const statCards = document.querySelectorAll('#progressModal .grid > div > div:first-child');
+                
+                if (statCards.length >= 4) {
+                    statCards[0].textContent = Math.round((stats.totalMinutes || 0) / 60 * 10) / 10; // Hours with 1 decimal
+                    statCards[1].textContent = stats.totalSessions || 0;
+                    statCards[2].textContent = stats.streak || 0;
+                    statCards[3].textContent = (stats.subjects || []).length;
+                }
+                
+                // Load recent sessions
+                this.loadRecentSessions();
+                this.loadActivePlans();
+            }
+            
+            loadRecentSessions() {
+                const container = document.getElementById('recentSessions');
+                if (this.sessions.length === 0) {
+                    container.innerHTML = 'No study sessions recorded yet. Start your first session to see progress here!';
+                    return;
+                }
+                
+                const recentSessions = this.sessions.slice(0, 5);
+                container.innerHTML = recentSessions.map(session => `
+                    <div style=\"background: white; padding: 1rem; border-radius: 0.5rem; margin: 0.5rem 0; display: flex; justify-content: space-between; align-items: center;\">
+                        <div>
+                            <div style=\"font-weight: 600; color: #1e293b;\">${session.subject}${session.topic ? ' - ' + session.topic : ''}</div>
+                            <div style=\"font-size: 0.875rem; color: #64748b;\">${new Date(session.startTime).toLocaleDateString()} • ${Math.round(session.timeStudied || 0)} min</div>
+                        </div>
+                        <div style=\"color: ${session.completed ? '#10b981' : '#f59e0b'}; font-size: 1.25rem;\">
+                            ${session.completed ? '✅' : '⏸️'}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            loadActivePlans() {
+                const container = document.getElementById('activePlans');
+                const activePlans = this.studyPlans.filter(plan => plan.active);
+                
+                if (activePlans.length === 0) {
+                    container.innerHTML = 'No active study plans. Create your first plan to stay organized!';
+                    return;
+                }
+                
+                container.innerHTML = activePlans.slice(0, 3).map(plan => `
+                    <div style=\"background: white; padding: 1rem; border-radius: 0.5rem; margin: 0.5rem 0;\">
+                        <div style=\"font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;\">${plan.name}</div>
+                        <div style=\"font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;\">${plan.subject} • ${plan.sessionLength} min sessions</div>
+                        <div style=\"font-size: 0.875rem; color: #3b82f6;\">Target: ${new Date(plan.targetDate).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // Initialize study session manager
+        let studyManager;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 StudyWise AI with Quick Study features loaded');
+            
+            // Initialize study manager
+            studyManager = new StudySessionManager();
+            
+            // Modal control functions
+            function openAuthModal(mode = 'login') {
+                const modal = document.getElementById('authModal');
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                const authTitle = document.getElementById('authTitle');
+                
+                if (modal) {
+                    modal.classList.add('show');
+                    
+                    if (mode === 'login') {
+                        loginForm.classList.remove('hidden');
+                        registerForm.classList.add('hidden');
+                        authTitle.textContent = 'Login to StudyWise AI';
+                    } else {
+                        loginForm.classList.add('hidden');
+                        registerForm.classList.remove('hidden');
+                        authTitle.textContent = 'Register for StudyWise AI';
+                    }
+                }
+            }
+            
+            function closeModal(modalId) {
+                document.getElementById(modalId)?.classList.remove('show');
+            }
+            
+            function openSubjectModal() {
+                document.getElementById('subjectModal').classList.add('show');
+            }
+            
+            // Event Listeners
+            
+            // Authentication
+            document.getElementById('loginBtn')?.addEventListener('click', () => openAuthModal('login'));
+            document.getElementById('registerBtn')?.addEventListener('click', () => openAuthModal('register'));
+            document.getElementById('closeAuthModal')?.addEventListener('click', () => closeModal('authModal'));
+            
+            // Quick Study 
+            document.getElementById('quickStudyBtn')?.addEventListener('click', openSubjectModal);
+            document.getElementById('startLearningBtn')?.addEventListener('click', openSubjectModal);
+            document.getElementById('closeSubjectModal')?.addEventListener('click', () => closeModal('subjectModal'));
+            
+            // Study Session
+            document.getElementById('startSessionBtn')?.addEventListener('click', () => {
+                const subject = document.getElementById('subjectCategory').value;
+                const topic = document.getElementById('specificTopic').value;
+                const duration = parseInt(document.getElementById('sessionDuration').value);
+                const goal = document.getElementById('studyGoal').value;
+                
+                if (!subject) {
+                    alert('Please select a subject category');
+                    return;
+                }
+                
+                studyManager.startSession(subject, topic, duration, goal);
+            });
+            
+            // Active Session Controls
+            document.getElementById('closeActiveSession')?.addEventListener('click', () => {
+                if (studyManager.currentSession) {
+                    if (confirm('This will pause your session. Continue?')) {
+                        studyManager.pauseTimer();
+                        closeModal('activeSessionModal');
+                    }
+                } else {
+                    closeModal('activeSessionModal');
+                }
+            });
+            
+            document.getElementById('pauseResumeBtn')?.addEventListener('click', () => studyManager.pauseTimer());
+            document.getElementById('stopSessionBtn')?.addEventListener('click', () => studyManager.stopSession());
+            document.getElementById('addTimeBtn')?.addEventListener('click', () => studyManager.addTime());
+            
+            // Study Planner
+            document.getElementById('studyPlannerBtn')?.addEventListener('click', () => {
+                document.getElementById('studyPlanModal').classList.add('show');
+                // Set default target date to next week
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                document.getElementById('planTargetDate').value = nextWeek.toISOString().split('T')[0];
+            });
+            document.getElementById('closeStudyPlanModal')?.addEventListener('click', () => closeModal('studyPlanModal'));
+            document.getElementById('createPlanBtn')?.addEventListener('click', () => studyManager.createStudyPlan());
+            
+            // Progress Dashboard
+            document.getElementById('viewProgressBtn')?.addEventListener('click', () => {
+                studyManager.loadProgressData();
+                document.getElementById('progressModal').classList.add('show');
+            });
+            document.getElementById('closeProgressModal')?.addEventListener('click', () => closeModal('progressModal'));
+            
+            // AI Chat
+            document.getElementById('askAiBtn')?.addEventListener('click', () => document.getElementById('chatModal').classList.add('show'));
+            document.getElementById('closeChatModal')?.addEventListener('click', () => closeModal('chatModal'));
+            
+            // Form switching
+            document.getElementById('switchToRegister')?.addEventListener('click', () => openAuthModal('register'));
+            document.getElementById('switchToLogin')?.addEventListener('click', () => openAuthModal('login'));
+            
+            // Close modals on backdrop click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+            
+            // Chat functionality
+            const sendMessage = () => {
+                const input = document.getElementById('chatInput');
+                const messages = document.getElementById('chatMessages');
+                
+                if (input && messages && input.value.trim()) {
+                    const message = input.value.trim();
+                    
+                    // Add user message
+                    const userDiv = document.createElement('div');
+                    userDiv.style.cssText = 'margin-bottom: 1rem; text-align: right;';
+                    userDiv.innerHTML = `<div style=\"display: inline-block; background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 1rem; max-width: 80%;\">${message}</div>`;
+                    messages.appendChild(userDiv);
+                    
+                    // Add AI response (placeholder)
+                    setTimeout(() => {
+                        const aiDiv = document.createElement('div');
+                        aiDiv.style.cssText = 'margin-bottom: 1rem;';
+                        
+                        // Smart responses based on keywords
+                        let response = \"Thanks for your question! \";
+                        if (message.toLowerCase().includes('study') || message.toLowerCase().includes('learn')) {
+                            response += \"For effective studying, try the Pomodoro Technique with 25-minute focused sessions. Use our Quick Study feature to get started!\";
+                        } else if (message.toLowerCase().includes('time') || message.toLowerCase().includes('schedule')) {
+                            response += \"Good time management is key! Create a study plan using our Study Planner to organize your learning schedule.\";
+                        } else if (message.toLowerCase().includes('motivation') || message.toLowerCase().includes('help')) {
+                            response += \"Stay motivated by setting clear goals and tracking your progress. Check your study statistics to see how far you've come!\";
+                        } else {
+                            response += \"I'm here to help with your studies! Try asking about study techniques, time management, or creating study plans.\";
+                        }
+                        
+                        aiDiv.innerHTML = `<div style=\"display: inline-block; background: #f1f5f9; color: #1e293b; padding: 0.5rem 1rem; border-radius: 1rem; max-width: 80%;\">${response}</div>`;
+                        messages.appendChild(aiDiv);
+                        messages.scrollTop = messages.scrollHeight;
+                    }, 1000);
+                    
+                    input.value = '';
+                    messages.scrollTop = messages.scrollHeight;
+                }
+            };
+            
+            document.getElementById('sendMessage')?.addEventListener('click', sendMessage);
+            document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            
+            // Form submissions
+            document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert('Login functionality will connect to your authentication system.');
+            });
+            
+            document.getElementById('registerForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert('Registration functionality will connect to your authentication system.');
+            });
+            
+            console.log('✅ All Quick Study features initialized successfully');
+        });
+    </script>
+</body>
+</html>
