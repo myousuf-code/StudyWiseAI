@@ -11,10 +11,14 @@ class StudyWiseApp {
 
     init() {
         console.log('StudyWiseApp initializing...');
-        this.setupEventListeners();
-        this.checkAuthStatus();
-        this.initializeChat();
-        console.log('StudyWiseApp initialization complete');
+        try {
+            this.setupEventListeners();
+            this.checkAuthStatus();
+            this.initializeChat();
+            console.log('StudyWiseApp initialization complete');
+        } catch (error) {
+            console.error('Error during initialization:', error);
+        }
     }
 
     setupEventListeners() {
@@ -163,40 +167,15 @@ class StudyWiseApp {
         }
     }
 
-    checkAuthStatus() {
-        if (this.authToken) {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            this.updateUIForLoggedInUser(user);
-        }
-    }
-
-    updateUIForLoggedInUser(user) {
-        // Update navigation buttons
-        const loginBtn = document.getElementById('loginBtn');
-        const registerBtn = document.getElementById('registerBtn');
-        
-        if (loginBtn && registerBtn) {
-            loginBtn.textContent = `Welcome, ${user.username}`;
-            loginBtn.onclick = () => this.showUserMenu();
-            registerBtn.textContent = 'Logout';
-            registerBtn.onclick = () => this.logout();
-        }
-    }
-
-    logout() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        this.authToken = null;
-        location.reload();
-    }
-
     // Modal Controls
     openChatModal() {
-        document.getElementById('chatModal').classList.remove('hidden');
+        const modal = document.getElementById('chatModal');
+        if (modal) modal.classList.remove('hidden');
     }
 
     closeChatModal() {
-        document.getElementById('chatModal').classList.add('hidden');
+        const modal = document.getElementById('chatModal');
+        if (modal) modal.classList.add('hidden');
     }
 
     openAuthModal(mode = 'login') {
@@ -212,7 +191,8 @@ class StudyWiseApp {
     }
 
     closeAuthModal() {
-        document.getElementById('authModal').classList.add('hidden');
+        const modal = document.getElementById('authModal');
+        if (modal) modal.classList.add('hidden');
     }
 
     switchAuthMode(mode) {
@@ -482,10 +462,17 @@ class StudyWiseApp {
             return;
         }
         
-        // Hide home sections, show dashboard
-        document.querySelector('.bg-gradient-to-r.from-blue-600').parentElement.classList.add('hidden');
-        document.getElementById('features').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
+        // Hide home sections, show dashboard (if elements exist)
+        const heroSection = document.querySelector('.hero, .bg-gradient-to-r.from-blue-600');
+        if (heroSection) {
+            heroSection.classList.add('hidden');
+        }
+        const featuresEl = document.getElementById('features');
+        if (featuresEl) featuresEl.classList.add('hidden');
+        const quickActionsEl = document.querySelector('.quick-actions');
+        if (quickActionsEl) quickActionsEl.classList.add('hidden');
+        const dashboardEl = document.getElementById('dashboard');
+        if (dashboardEl) dashboardEl.classList.remove('hidden');
         
         // Load dashboard data
         this.loadStudyPlans();
@@ -493,17 +480,34 @@ class StudyWiseApp {
     }
 
     hideDashboard() {
-        // Show home sections, hide dashboard
-        document.querySelector('.bg-gradient-to-r.from-blue-600').parentElement.classList.remove('hidden');
-        document.getElementById('features').classList.remove('hidden');
-        document.getElementById('dashboard').classList.add('hidden');
+        // Show home sections, hide dashboard (if elements exist)
+        const heroSection = document.querySelector('.hero, .bg-gradient-to-r.from-blue-600');
+        if (heroSection) {
+            heroSection.classList.remove('hidden');
+        }
+        const featuresEl = document.getElementById('features');
+        if (featuresEl) featuresEl.classList.remove('hidden');
+        const quickActionsEl = document.querySelector('.quick-actions');
+        if (quickActionsEl) quickActionsEl.classList.remove('hidden');
+        const dashboardEl = document.getElementById('dashboard');
+        if (dashboardEl) dashboardEl.classList.add('hidden');
     }
 
     updateUIForLoggedInUser(user) {
-        document.getElementById('guestSection').classList.add('hidden');
-        document.getElementById('userSection').classList.remove('hidden');
-        document.getElementById('username').textContent = `Welcome, ${user.full_name || user.username}!`;
-        this.showDashboard();
+        const guestSection = document.getElementById('guestSection');
+        const userSection = document.getElementById('userSection');
+        const usernameEl = document.getElementById('username');
+        
+        if (guestSection) guestSection.classList.add('hidden');
+        if (userSection) userSection.classList.remove('hidden');
+        if (usernameEl) usernameEl.textContent = `Welcome, ${user.full_name || user.username}!`;
+        
+        // Don't auto-show dashboard in bulletproof mode (no dashboard element)
+        // Only show dashboard if dashboard element exists
+        const dashboardEl = document.getElementById('dashboard');
+        if (dashboardEl) {
+            this.showDashboard();
+        }
     }
 
     logout() {
@@ -511,20 +515,25 @@ class StudyWiseApp {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         
-        document.getElementById('userSection').classList.add('hidden');
-        document.getElementById('guestSection').classList.remove('hidden');
+        const userSection = document.getElementById('userSection');
+        const guestSection = document.getElementById('guestSection');
+        if (userSection) userSection.classList.add('hidden');
+        if (guestSection) guestSection.classList.remove('hidden');
         this.hideDashboard();
         this.showNotification('Logged out successfully', 'success');
     }
 
     // Study Plan Management
     openStudyPlanModal() {
-        document.getElementById('studyPlanModal').classList.remove('hidden');
+        const modal = document.getElementById('studyPlanModal');
+        if (modal) modal.classList.remove('hidden');
     }
 
     closeStudyPlanModal() {
-        document.getElementById('studyPlanModal').classList.add('hidden');
-        document.getElementById('studyPlanForm').reset();
+        const modal = document.getElementById('studyPlanModal');
+        const form = document.getElementById('studyPlanForm');
+        if (modal) modal.classList.add('hidden');
+        if (form) form.reset();
     }
 
     async handleCreateStudyPlan(e) {
@@ -535,12 +544,23 @@ class StudyWiseApp {
             return;
         }
 
+        const titleEl = document.getElementById('planTitle');
+        const subjectEl = document.getElementById('planSubject');
+        const difficultyEl = document.getElementById('planDifficulty');
+        const durationEl = document.getElementById('planDuration');
+        const descriptionEl = document.getElementById('planDescription');
+        
+        if (!titleEl || !subjectEl || !difficultyEl || !durationEl) {
+            console.error('Study plan form elements not found');
+            return;
+        }
+
         const formData = {
-            title: document.getElementById('planTitle').value,
-            subject: document.getElementById('planSubject').value,
-            difficulty_level: document.getElementById('planDifficulty').value,
-            estimated_duration: parseInt(document.getElementById('planDuration').value) * 60, // Convert to minutes
-            description: document.getElementById('planDescription').value
+            title: titleEl.value,
+            subject: subjectEl.value,
+            difficulty_level: difficultyEl.value,
+            estimated_duration: parseInt(durationEl.value) * 60, // Convert to minutes
+            description: descriptionEl ? descriptionEl.value : ''
         };
 
         try {
@@ -587,6 +607,10 @@ class StudyWiseApp {
 
     displayStudyPlans(studyPlans) {
         const container = document.getElementById('studyPlansList');
+        if (!container) {
+            console.log('studyPlansList element not found, skipping display');
+            return;
+        }
         
         if (studyPlans.length === 0) {
             container.innerHTML = `
@@ -627,6 +651,12 @@ class StudyWiseApp {
 
     async loadDashboardStats() {
         if (!this.authToken) return;
+        
+        const statsEl = document.getElementById('dashboardStats');
+        if (!statsEl) {
+            console.log('dashboardStats element not found, skipping stats load');
+            return;
+        }
 
         try {
             const response = await fetch(`${this.apiBaseUrl}/progress/summary`, {
@@ -637,11 +667,11 @@ class StudyWiseApp {
 
             if (response.ok) {
                 const stats = await response.json();
-                document.getElementById('dashboardStats').textContent = 
+                statsEl.textContent = 
                     `📊 ${stats.total_sessions || 0} sessions completed • ⏱️ ${Math.floor((stats.total_time || 0) / 60)} hours studied`;
             }
         } catch (error) {
-            document.getElementById('dashboardStats').textContent = 'Welcome to your learning dashboard!';
+            statsEl.textContent = 'Welcome to your learning dashboard!';
         }
     }
 
@@ -787,10 +817,14 @@ class StudyWiseApp {
     }
 
     checkAuthStatus() {
-        const user = localStorage.getItem('user');
-        if (this.authToken && user) {
-            const userData = JSON.parse(user);
-            this.updateUIForLoggedInUser(userData);
+        try {
+            const user = localStorage.getItem('user');
+            if (this.authToken && user) {
+                const userData = JSON.parse(user);
+                this.updateUIForLoggedInUser(userData);
+            }
+        } catch (error) {
+            console.error('Error checking auth status:', error);
         }
     }
 }
@@ -804,21 +838,5 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('StudyWise App initialized successfully');
     } catch (error) {
         console.error('Error initializing StudyWise App:', error);
-    }
-    
-    // Add event listeners for quick action buttons
-    const quickStudyBtn = document.querySelector('[data-action="quick-study"]') || 
-                         Array.from(document.querySelectorAll('button')).find(btn => 
-                             btn.textContent.includes('Start Session'));
-    
-    if (quickStudyBtn) {
-        quickStudyBtn.addEventListener('click', () => {
-            window.studyWiseApp.startQuickStudySession();
-        });
-    }
-    
-    // Load user progress if logged in
-    if (window.studyWiseApp && window.studyWiseApp.authToken) {
-        window.studyWiseApp.loadProgressData();
     }
 });

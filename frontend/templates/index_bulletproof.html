@@ -18,6 +18,11 @@
             line-height: 1.6;
         }
         
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+        
         /* Navigation */
         nav {
             background: white;
@@ -206,6 +211,10 @@
             display: flex !important;
         }
         
+        .modal.hidden {
+            display: none !important;
+        }
+        
         .modal-content {
             background: white;
             padding: 2rem;
@@ -286,6 +295,38 @@
             color: #ef4444;
             font-weight: bold;
         }
+        
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .notification.error {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .notification.info {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -294,8 +335,15 @@
         <div class="nav-container">
             <div class="logo">StudyWise AI</div>            
             <div class="nav-buttons">
-                <button class="btn btn-primary" onclick="testAlert('Login button works!')">Login</button>
-                <button class="btn btn-success" onclick="testAlert('Register button works!')">Register</button>
+                <div id="userSection" class="hidden">
+                    <span id="username" style="margin-right: 1rem; color: #64748b;">Welcome back!</span>
+                    <button id="dashboardBtn" class="btn btn-primary">📊 Dashboard</button>
+                    <button id="logoutBtn" class="btn" style="background-color: #ef4444; color: white;">Logout</button>
+                </div>
+                <div id="guestSection">
+                    <button id="loginBtn" class="btn btn-primary">Login</button>
+                    <button id="registerBtn" class="btn btn-success">Register</button>
+                </div>
             </div>
         </div>
     </nav>
@@ -354,6 +402,81 @@
             </div>
         </div>
     </section>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="authTitle" class="modal-title">Login to StudyWise AI</h3>
+                <button id="closeAuthModal" class="close-btn">&times;</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="form-group">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Login
+                </button>
+                <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
+                    Don't have an account? 
+                    <button type="button" id="switchToRegister" class="btn" style="display: inline; padding: 0; background: none; color: #3b82f6; text-decoration: underline;">Register here</button>
+                </p>
+            </form>
+            
+            <!-- Register Form (hidden by default) -->
+            <form id="registerForm" class="form-group hidden">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="registerFullName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="registerUsername" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="registerEmail" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="registerPassword" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">
+                    Register
+                </button>
+                <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem;">
+                    Already have an account? 
+                    <button type="button" id="switchToLogin" class="btn" style="display: inline; padding: 0; background: none; color: #10b981; text-decoration: underline;">Login here</button>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">💬 AI Study Assistant</h3>
+                <button id="closeChatModal" class="close-btn">&times;</button>
+            </div>
+            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 1rem; min-height: 300px;">
+                <div style="text-align: center; color: #64748b; padding: 2rem;">
+                    Ask me anything about studying! I'm here to help. 🤖
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <input id="chatInput" type="text" placeholder="Ask a question..." class="form-input" style="flex: 1;">
+                <button id="sendMessage" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Subject Selection Modal -->
     <div id="subjectModal" class="modal">
@@ -1002,5 +1125,8 @@
         
         console.log('📅 Study Planner loaded successfully!');
     </script>
+    
+    <!-- Main App JavaScript -->
+    <script src="/static/js/app.js"></script>
 </body>
 </html>
