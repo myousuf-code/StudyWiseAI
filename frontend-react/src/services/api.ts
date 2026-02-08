@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosError } from 'axios';
 import type {
   AuthResponse,
   LoginRequest,
@@ -110,6 +111,27 @@ class ApiService {
 
   async completeSession(sessionId: number) {
     const response = await this.api.post(`/study-plans/sessions/${sessionId}/complete`);
+    return response.data;
+  }
+
+  // Natural Language Processing
+  async summarizeText(data: { text: string }): Promise<{ summary: string }> {
+    const response = await this.api.post<{ summary: string }>('/ai/summarize', data);
+    return response.data;
+  }
+
+  async analyzeSentiment(data: { text: string }): Promise<{ sentiment: string; confidence: number }> {
+    const response = await this.api.post<{ sentiment: string; confidence: number }>('/ai/sentiment', data);
+    return response.data;
+  }
+
+  async checkGrammar(data: { text: string }): Promise<{ issues: string[]; suggestions: string[] }> {
+    const response = await this.api.post<{ issues: string[]; suggestions: string[] }>('/ai/grammar', data);
+    return response.data;
+  }
+
+  async paraphraseText(data: { text: string }): Promise<{ paraphrase: string }> {
+    const response = await this.api.post<{ paraphrase: string }>('/ai/paraphrase', data);
     return response.data;
   }
 }

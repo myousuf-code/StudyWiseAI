@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { RegisterRequest } from '../../types';
+import type { RegisterRequest } from '../../types';
 
 interface RegisterFormProps {
   onClose: () => void;
