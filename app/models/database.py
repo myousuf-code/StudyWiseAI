@@ -34,6 +34,7 @@ class User(Base):
     progress_records = relationship("ProgressRecord", back_populates="user")
     reminders = relationship("Reminder", back_populates="user")
     chat_messages = relationship("ChatMessage", back_populates="user")
+    career_sessions = relationship("CareerCounselingSession", back_populates="user")
 
 class StudyPlan(Base):
     """AI-generated personalized study plans"""
@@ -142,6 +143,26 @@ class ChatMessage(Base):
     
     # Relationships
     user = relationship("User", back_populates="chat_messages")
+
+class CareerCounselingSession(Base):
+    """Career counseling sessions with AI"""
+    __tablename__ = "career_counseling_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    target_profession = Column(String, nullable=False)
+    session_status = Column(String, default="active")  # active, completed, paused
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Session data
+    initial_questions = Column(Text)  # AI-generated initial questions
+    user_responses = Column(Text)  # User's answers to questions
+    action_plan = Column(Text)  # Generated career action plan
+    session_notes = Column(Text)  # Additional notes or feedback
+    
+    # Relationships
+    user = relationship("User", back_populates="career_sessions")
 
 class LearningResource(Base):
     """Study materials and resources"""

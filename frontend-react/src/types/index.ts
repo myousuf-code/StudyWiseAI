@@ -27,6 +27,24 @@ export interface AuthResponse {
 }
 
 // Study Plan Types
+export interface StudyPlanMaterials {
+  subjects?: string[];
+  skills?: string[];
+  resources?: string[];
+  career_source?: { session_id: number; target_profession: string; generated_from: string };
+}
+
+export interface StudyPlanSchedule {
+  weekly_tasks?: { task: string; subject: string; duration: string; priority: string; timeline: string }[];
+  daily_activities?: { activity: string; duration: string; type: string }[];
+}
+
+export interface StudyPlanMilestones {
+  short_term?: string[];
+  medium_term?: string[];
+  long_term?: string[];
+}
+
 export interface StudyPlan {
   id: number;
   user_id: number;
@@ -36,6 +54,9 @@ export interface StudyPlan {
   estimated_duration: number;
   description?: string;
   created_at: string;
+  study_materials?: StudyPlanMaterials;
+  schedule?: StudyPlanSchedule;
+  milestones?: StudyPlanMilestones;
 }
 
 export interface CreateStudyPlanRequest {

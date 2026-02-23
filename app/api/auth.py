@@ -83,6 +83,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """User login"""
+    # OAuth2PasswordRequestForm's 'username' field is used for email in our case
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(

@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { apiService } from './services/api';
+import type { StudyPlan } from './types/index';
 import TabNavigation from './components/common/TabNavigation';
 import HomePage from './components/common/HomePage';
 import LoginForm from './components/auth/LoginForm';
@@ -10,10 +12,12 @@ import ProgressModal from './components/dashboard/ProgressModal';
 import PomodoroModal from './components/study/PomodoroModal';
 import WeeklyPlannerModal from './components/study/WeeklyPlannerModal';
 import NLPModal from './components/ai/NLPModal';
+import CareerCounselingModal from './components/career/CareerCounselingModal';
+import StudyPlanDetailModal from './components/study/StudyPlanDetailModal';
 import Notification from './components/common/Notification';
 import type { Notification as NotificationType } from './types/index';
 
-type ActiveTab = 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp';
+type ActiveTab = 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp' | 'career';
 
 function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
@@ -24,7 +28,45 @@ function App() {
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [showPlanner, setShowPlanner] = useState(false);
   const [showNLP, setShowNLP] = useState(false);
+  const [showCareerCounseling, setShowCareerCounseling] = useState(false);
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
+  const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
+  const [studyPlansLoading, setStudyPlansLoading] = useState(false);
+  const [studyPlansError, setStudyPlansError] = useState('');
+  const [deletingPlanId, setDeletingPlanId] = useState<number | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<StudyPlan | null>(null);
+
+  const loadStudyPlans = useCallback(async () => {
+    setStudyPlansLoading(true);
+    setStudyPlansError('');
+    try {
+      const plans = await apiService.getStudyPlans();
+      setStudyPlans(plans);
+    } catch (e: any) {
+      setStudyPlansError('Failed to load study plans. Please log in first.');
+    } finally {
+      setStudyPlansLoading(false);
+    }
+  }, []);
+
+  const deleteStudyPlan = async (id: number) => {
+    if (!confirm('Delete this study plan?')) return;
+    setDeletingPlanId(id);
+    try {
+      await apiService.deleteStudyPlan(id);
+      setStudyPlans(prev => prev.filter(p => p.id !== id));
+    } catch (e: any) {
+      setStudyPlansError('Failed to delete study plan.');
+    } finally {
+      setDeletingPlanId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'study') {
+      loadStudyPlans();
+    }
+  }, [activeTab, loadStudyPlans]);
 
   const addNotification = (message: string, type: NotificationType['type']) => {
     const notification: NotificationType = {
@@ -52,9 +94,15 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        {selectedPlan && <StudyPlanDetailModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />}
         <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
         {/* Tab Navigation */}
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNavigation 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          onLoginClick={() => setShowLogin(true)}
+          onRegisterClick={() => setShowRegister(true)}
+        />
 
         {/* Main Content based on Active Tab */}
         <main>
@@ -70,6 +118,79 @@ function App() {
               <div className="max-w-7xl mx-auto px-4 py-12">
                 <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">⚡ Quick Study Sessions</h2>
                 <p className="text-lg text-gray-600 dark:text-gray-300 mb-12">Start focused Pomodoro study sessions with customizable durations and track your progress.</p>
+
+                {/* ── My Study Plans ── */}
+                <div className="mb-14">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white">📚 My Study Plans</h3>
+                    <button
+                      onClick={loadStudyPlans}
+                      disabled={studyPlansLoading}
+                      className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      {studyPlansLoading ? '⟳ Loading...' : '↺ Refresh'}
+                    </button>
+                  </div>
+
+                  {studyPlansError && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{studyPlansError}</div>
+                  )}
+
+                  {studyPlansLoading ? (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading your study plans...</div>
+                  ) : studyPlans.length === 0 ? (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-600 p-10 text-center">
+                      <div className="text-5xl mb-3">📭</div>
+                      <p className="text-gray-500 dark:text-gray-400 font-medium">No study plans yet.</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Use Career Counseling to generate a personalised plan, or create one below.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                      {studyPlans.map(plan => (
+                        <div key={plan.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col gap-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <span className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">{plan.subject}</span>
+                              <h4 className="font-bold text-gray-800 dark:text-white mt-0.5 leading-tight">{plan.title}</h4>
+                            </div>
+                            <span className={`shrink-0 text-xs px-2 py-1 rounded-full font-medium ${
+                              plan.difficulty_level === 'beginner' ? 'bg-green-100 text-green-700' :
+                              plan.difficulty_level === 'advanced' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>{plan.difficulty_level}</span>
+                          </div>
+
+                          {plan.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{plan.description}</p>
+                          )}
+
+                          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                            {plan.estimated_duration > 0 && (
+                              <span>⏱ {plan.estimated_duration} hrs est.</span>
+                            )}
+                            <span>📅 {new Date(plan.created_at).toLocaleDateString()}</span>
+                          </div>
+
+                          <div className="flex items-center gap-3 mt-1">
+                            <button
+                              onClick={() => setSelectedPlan(plan)}
+                              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 transition-colors"
+                            >
+                              👁 View full plan
+                            </button>
+                            <button
+                              onClick={() => deleteStudyPlan(plan.id)}
+                              disabled={deletingPlanId === plan.id}
+                              className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              {deletingPlanId === plan.id ? 'Deleting...' : '🗑 Delete'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Main CTA */}
@@ -374,6 +495,74 @@ function App() {
               </div>
             </div>
           )}
+
+          {activeTab === 'career' && (
+            <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800">
+              <div className="max-w-7xl mx-auto px-4 py-12">
+                <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">🎯 Career Counseling</h2>
+                <p className="text-lg text-gray-600 dark:text-gray-300 mb-12">Get personalized career guidance with AI-powered assessment and action planning.</p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Main CTA */}
+                  <div className="lg:col-span-1">
+                    <div className="bg-gradient-to-br from-green-600 to-green-700 text-white rounded-xl p-8 shadow-lg">
+                      <div className="text-5xl mb-4">🎯</div>
+                      <h3 className="text-2xl font-bold mb-4">Start Your Journey</h3>
+                      <p className="mb-6">Begin your personalized career counseling session with our AI career advisor</p>
+                      <button
+                        onClick={() => setShowCareerCounseling(true)}
+                        className="w-full bg-white text-green-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-all"
+                      >
+                        🚀 Start Counseling
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Info Cards */}
+                  <div className="lg:col-span-2 space-y-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-green-600 shadow">
+                      <h4 className="font-bold text-lg mb-2 text-gray-800 dark:text-white">📋 Career Assessment</h4>
+                      <p className="text-gray-700 dark:text-gray-300">Our AI counselor will ask targeted questions about your background, interests, and goals to understand your career aspirations.</p>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-blue-600 shadow">
+                      <h4 className="font-bold text-lg mb-2 text-gray-800 dark:text-white">🎓 Personalized Action Plan</h4>
+                      <p className="text-gray-700 dark:text-gray-300">Receive a comprehensive career development plan with specific subjects to study, activities to participate in, and milestones to achieve your target profession.</p>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border-l-4 border-purple-600 shadow">
+                      <h4 className="font-bold text-lg mb-2 text-gray-800 dark:text-white">📚 Academic Guidance</h4>
+                      <p className="text-gray-700 dark:text-gray-300">Get recommendations for key subjects, courses, and educational pathways that will prepare you for your chosen career field.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features Grid */}
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow text-center">
+                    <div className="text-4xl mb-3">🎓</div>
+                    <h4 className="font-bold mb-2 text-gray-800 dark:text-white">Subject Focus</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Key academic subjects</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow text-center">
+                    <div className="text-4xl mb-3">🚀</div>
+                    <h4 className="font-bold mb-2 text-gray-800 dark:text-white">Activities</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Practical experiences</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow text-center">
+                    <div className="text-4xl mb-3">📈</div>
+                    <h4 className="font-bold mb-2 text-gray-800 dark:text-white">Skill Building</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Technical & soft skills</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow text-center">
+                    <div className="text-4xl mb-3">🎯</div>
+                    <h4 className="font-bold mb-2 text-gray-800 dark:text-white">Milestones</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Career progression</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
 
         {/* Modals */}
@@ -404,6 +593,8 @@ function App() {
         {showPlanner && <WeeklyPlannerModal onClose={() => setShowPlanner(false)} />}
 
         {showNLP && <NLPModal onClose={() => setShowNLP(false)} />}
+
+        {showCareerCounseling && <CareerCounselingModal isOpen={showCareerCounseling} onClose={() => setShowCareerCounseling(false)} />}
 
         {/* Notifications */}
         <div className="fixed top-4 right-4 z-50 space-y-2">

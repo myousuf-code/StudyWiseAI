@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 
 from app.core.config import settings
+from app.core.database import create_tables
 from app.api import auth, study_plans, ai_assistant, progress, reminders
 
 # Create FastAPI instance
@@ -22,10 +23,16 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Initialize database tables on startup
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on startup"""
+    create_tables()
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_HOSTS + ["http://localhost:5173"],  # Add Vite dev server
+    allow_origins=settings.ALLOWED_HOSTS + ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],  # Add Vite dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

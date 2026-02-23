@@ -1,18 +1,22 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface TabNavProps {
-  activeTab: 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp';
-  onTabChange: (tab: 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp') => void;
-  onLogout?: () => void;
+  activeTab: 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp' | 'career';
+  onTabChange: (tab: 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp' | 'career') => void;
+  onLoginClick?: () => void;
+  onRegisterClick?: () => void;
 }
 
-const TabNavigation: React.FC<TabNavProps> = ({ activeTab, onTabChange, onLogout }) => {
+const TabNavigation: React.FC<TabNavProps> = ({ activeTab, onTabChange, onLoginClick, onRegisterClick }) => {
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
   const tabs = [
     { id: 'home' as const, label: '🏠 Home', icon: '🏠' },
     { id: 'study' as const, label: '⚡ Quick Study', icon: '⚡' },
     { id: 'chat' as const, label: '💬 AI Assistant', icon: '💬' },
+    { id: 'career' as const, label: '🎯 Career Counseling', icon: '🎯' },
     { id: 'nlp' as const, label: '🤖 NLP Tools', icon: '🤖' },
     { id: 'progress' as const, label: '📈 Progress', icon: '📈' },
     { id: 'planner' as const, label: '📅 Planner', icon: '📅' },
@@ -53,13 +57,33 @@ const TabNavigation: React.FC<TabNavProps> = ({ activeTab, onTabChange, onLogout
             >
               {theme === 'light' ? '🌙' : '☀️'}
             </button>
-            {onLogout && (
-              <button
-                onClick={onLogout}
-                className="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition-colors font-semibold"
-              >
-                🚪 Logout
-              </button>
+            {isAuthenticated && user ? (
+              <>
+                <span className="text-white text-sm">
+                  {user.full_name || user.username}
+                </span>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition-colors font-semibold text-white"
+                >
+                  🚪 Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={onLoginClick}
+                  className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors font-semibold text-white"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={onRegisterClick}
+                  className="px-4 py-2 bg-green-500 rounded-lg hover:bg-green-600 transition-colors font-semibold text-white"
+                >
+                  Register
+                </button>
+              </>
             )}
           </div>
         </div>

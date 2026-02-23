@@ -1,0 +1,7 @@
+1. VS code
+2. ...>Terminal>>New Terminal
+3. C:/Code/StudyWiseAI/venv/Scripts/Activate.ps1
+4. uvicorn app.main:app --reload
+5. Windows Explore and goto path C:\Code\StudyWiseAI\frontend-react
+6. In windows explorer bar write CMD
+7. npm run dev

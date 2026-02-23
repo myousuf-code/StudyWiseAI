@@ -22,6 +22,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 600000, // 10 minute timeout for AI endpoints
     });
 
     // Add request interceptor to include auth token
@@ -132,6 +133,58 @@ class ApiService {
 
   async paraphraseText(data: { text: string }): Promise<{ paraphrase: string }> {
     const response = await this.api.post<{ paraphrase: string }>('/ai/paraphrase', data);
+    return response.data;
+  }
+
+  // Career Counseling
+  async startCareerCounseling(data: { target_profession: string }): Promise<{
+    session_id: number;
+    target_profession: string;
+    initial_questions: string;
+    session_started: string;
+  }> {
+    const response = await this.api.post('/ai/career-counseling/start', data);
+    return response.data;
+  }
+
+  async generateCareerActionPlan(data: {
+    target_profession: string;
+    user_responses: string;
+  }): Promise<{
+    session_id: number;
+    target_profession: string;
+    action_plan: string;
+    generated_at: string;
+  }> {
+    const response = await this.api.post('/ai/career-counseling/generate-plan', data);
+    return response.data;
+  }
+
+  async getCareerCounselingHistory(): Promise<Array<{
+    session_id: number;
+    target_profession: string;
+    session_status: string;
+    created_at: string;
+    has_action_plan: boolean;
+    initial_questions?: string;
+    action_plan?: string;
+  }>> {
+    const response = await this.api.get('/ai/career-counseling/history');
+    return response.data;
+  }
+
+  async convertCareerToStudyPlan(data: {
+    session_id: number;
+    plan_title?: string;
+  }): Promise<{
+    success: boolean;
+    study_plan_id: number;
+    title: string;
+    tasks_created: number;
+    schedule: any;
+    message: string;
+  }> {
+    const response = await this.api.post('/ai/career-counseling/convert-to-study-plan', data);
     return response.data;
   }
 }
