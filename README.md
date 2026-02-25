@@ -112,6 +112,8 @@ python -c "from app.core.init_db import init_db; init_db()"
 
 # Start the API server
 uvicorn app.main:app --reload
+OR
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 The API will be available at `http://127.0.0.1:8000`.  
