@@ -56,6 +56,15 @@ async def ai_status(
     current_user: User = Depends(get_current_user)
 ):
     """Check AI provider status"""
+    if ai_service._nvidia_client:
+        return {
+            "status": "ready",
+            "provider": "nvidia",
+            "model_loaded": True,
+            "model_loading": False,
+            "model_name": settings.NVIDIA_MODEL,
+            "message": f"NVIDIA API ready ({settings.NVIDIA_MODEL})",
+        }
     if ai_service._groq_client:
         return {
             "status": "ready",
@@ -76,7 +85,7 @@ async def ai_status(
     else:
         status = "failed"
         provider = "none"
-        message = "No AI provider available — set GROQ_API_KEY in .env for instant access"
+        message = "No AI provider available - set NVIDIA_API_KEY or GROQ_API_KEY"
     return {
         "status": status,
         "provider": provider,

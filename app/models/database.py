@@ -21,6 +21,9 @@ class User(Base):
     full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)  # Set True after email confirmation
+    email_verification_token = Column(String(255), nullable=True, index=True)
+    email_verification_expires_at = Column(DateTime, nullable=True)
+    email_verification_sent_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
     

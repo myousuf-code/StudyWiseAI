@@ -4,6 +4,7 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  RegisterResponse,
   User,
   StudyPlan,
   CreateStudyPlanRequest,
@@ -71,8 +72,8 @@ class ApiService {
     return response.data;
   }
 
-  async register(data: RegisterRequest): Promise<User> {
-    const response = await this.api.post<User>('/auth/register', data);
+  async register(data: RegisterRequest): Promise<RegisterResponse> {
+    const response = await this.api.post<RegisterResponse>('/auth/register', data);
     return response.data;
   }
 

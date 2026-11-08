@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { User, LoginRequest, RegisterRequest } from '../types/index';
+import type { User, LoginRequest, RegisterRequest, RegisterResponse } from '../types/index';
 import { apiService, AUTH_LOGOUT_EVENT } from '../services/api';
 
 interface AuthContextType {
@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<RegisterResponse>;
   logout: () => void;
 }
 
@@ -49,8 +49,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (data: RegisterRequest) => {
-    await apiService.register(data);
-    // After registration, user needs to log in
+    return await apiService.register(data);
   };
 
   const logout = () => {

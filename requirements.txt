@@ -3,11 +3,12 @@
 # FastAPI Framework
 fastapi==0.115.0
 uvicorn[standard]==0.30.0
+slowapi==0.1.9
 
 # Database
 sqlalchemy==2.0.23
 alembic==1.13.1
-# psycopg2-binary==2.9.9  # For production PostgreSQL
+psycopg2-binary==2.9.9  # For production PostgreSQL
 # redis==5.0.1  # Optional for production caching
 
 # Authentication & Security
@@ -16,6 +17,7 @@ python-multipart==0.0.6
 
 # AI & ML Libraries  
 groq==1.6.0
+openai==1.109.1
 gpt4all==2.6.0
 # scikit-learn==1.3.2  # Commented out - requires Visual C++ Build Tools on Windows  
 pandas==2.1.4

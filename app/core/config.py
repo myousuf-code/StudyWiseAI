@@ -27,6 +27,8 @@ class Settings:
     # Groq API (primary AI provider — fast, free tier, no local model needed)
     GROQ_API_KEY: str = config("GROQ_API_KEY", default="")
     GROQ_MODEL: str = config("GROQ_MODEL", default="llama-3.1-8b-instant")
+    NVIDIA_API_KEY: str = config("NVIDIA_API_KEY", default="")
+    NVIDIA_MODEL: str = config("NVIDIA_MODEL", default="meta/llama-3.1-8b-instruct")
 
     # CORS — production origins only; dev origins injected via CORS_EXTRA_ORIGINS env var
     ALLOWED_HOSTS: List[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
@@ -39,6 +41,8 @@ class Settings:
     MAIL_FROM: str = config("MAIL_FROM", default="studywiseai@example.com")
     MAIL_PORT: int = config("MAIL_PORT", default=587, cast=int)
     MAIL_SERVER: str = config("MAIL_SERVER", default="smtp.gmail.com")
+    FRONTEND_URL: str = config("FRONTEND_URL", default="")
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = config("EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS", default=24, cast=int)
 
     # File upload settings
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB

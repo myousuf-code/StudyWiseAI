@@ -21,6 +21,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
     password: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [statusType, setStatusType] = useState<'success' | 'error' | 'info'>('info');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -32,6 +34,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setStatusMessage('');
 
     try {
       await login(formData);
@@ -39,6 +42,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
       onClose();
     } catch (error: any) {
       onError(error.response?.data?.detail || 'Login failed');
+      setStatusType('error');
+      setStatusMessage(error.response?.data?.detail || 'Login failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -59,19 +64,34 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {statusMessage && (
+            <div className={`rounded-lg p-3 text-sm border ${
+              statusType === 'success'
+                ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-200'
+                : statusType === 'error'
+                ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-700 dark:text-red-200'
+                : 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-200'
+            }`}>
+              {statusMessage}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email or Username
+              Email
             </label>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              autoComplete="username"
+              autoComplete="email"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
               required
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Use the same email address you registered with.
+            </p>
           </div>
 
           <div>

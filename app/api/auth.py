@@ -3,6 +3,7 @@ Authentication API Routes
 User registration, login, and profile management
 """
 from datetime import timedelta
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -35,10 +36,16 @@ class UserResponse(BaseModel):
     username: str
     full_name: str
     is_active: bool
+    is_verified: bool
     learning_style: Optional[str] = None
     
     class Config:
         from_attributes = True
+
+class RegisterResponse(BaseModel):
+    message: str
+    email: EmailStr
+    verification_required: bool = False
 
 class Token(BaseModel):
     access_token: str
@@ -55,12 +62,18 @@ class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=RegisterResponse)
 @limiter.limit("5/minute")
 async def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user already exists
-    if db.query(User).filter(User.email == user.email).first():
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
+        if not existing_user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="That email is already registered but not verified. Please verify the email or request a new verification link."
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
@@ -89,14 +102,19 @@ async def register(request: Request, user: UserCreate, db: Session = Depends(get
         email=user.email,
         username=user.username,
         hashed_password=get_password_hash(user.password),
-        full_name=user.full_name
+        full_name=user.full_name,
+        is_verified=True,
     )
     
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
-    return db_user
+
+    return {
+        "message": "Registration successful. You can log in now.",
+        "email": db_user.email,
+        "verification_required": False,
+    }
 
 @router.post("/login", response_model=Token)
 @limiter.limit("10/minute")
@@ -112,7 +130,6 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
         )
 
     # Update last_login only on actual login, not on every authenticated request
-    from datetime import datetime, timezone
     user.last_login = datetime.now(timezone.utc)
     db.commit()
 

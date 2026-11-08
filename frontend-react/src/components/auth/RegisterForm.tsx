@@ -24,6 +24,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -50,22 +51,29 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (formData.password.length < 8) {
-      onError('Password must be at least 8 characters');
+      const message = 'Password must be at least 8 characters';
+      setFormError(message);
+      onError(message);
       return;
     }
     if (formData.password !== confirmPassword) {
-      onError('Passwords do not match');
+      const message = 'Passwords do not match';
+      setFormError(message);
+      onError(message);
       return;
     }
     setIsSubmitting(true);
 
     try {
-      await register(formData);
-      onSuccess('Registration successful! Please login.');
+      const response = await register(formData);
+      onSuccess(response.message);
       onSwitchToLogin();
     } catch (error: any) {
-      onError(error.response?.data?.detail || 'Registration failed');
+      const message = error.response?.data?.detail || 'Registration failed';
+      setFormError(message);
+      onError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -86,6 +94,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {formError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-700 p-3 text-sm text-red-800 dark:text-red-200">
+              <p>{formError}</p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Full Name

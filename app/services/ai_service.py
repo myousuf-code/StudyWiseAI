@@ -1,7 +1,4 @@
-"""
-AI Assistant Service
-Groq API (primary) with GPT4All local fallback
-"""
+"""AI Assistant Service with hosted providers and a local fallback."""
 import logging
 from typing import List, Dict, Optional
 from app.core.config import settings
@@ -20,6 +17,14 @@ def _try_import_groq():
         return None
 
 
+def _try_import_openai():
+    try:
+        from openai import AsyncOpenAI
+        return AsyncOpenAI
+    except ImportError:
+        return None
+
+
 def _try_import_gpt4all():
     try:
         from gpt4all import GPT4All
@@ -29,11 +34,12 @@ def _try_import_gpt4all():
 
 
 AsyncGroq = _try_import_groq()
+AsyncOpenAI = _try_import_openai()
 GPT4All = _try_import_gpt4all()
 
 
 class AIAssistantService:
-    """AI service: Groq API primary, GPT4All local fallback"""
+    """AI service with hosted providers and a local fallback."""
 
     def __init__(self):
         self.model_name = settings.LOCAL_AI_MODEL
@@ -42,7 +48,17 @@ class AIAssistantService:
         self._model_loading = False
         self._model_permanently_failed = False
 
-        # Groq client (primary) — instantiated only when an API key is present
+        self._nvidia_client = None
+        if settings.NVIDIA_API_KEY and AsyncOpenAI:
+            try:
+                self._nvidia_client = AsyncOpenAI(
+                    api_key=settings.NVIDIA_API_KEY,
+                    base_url="https://integrate.api.nvidia.com/v1",
+                )
+                logger.info("NVIDIA API client ready (model: %s)", settings.NVIDIA_MODEL)
+            except Exception as e:
+                logger.warning("NVIDIA client init failed: %s", e)
+
         self._groq_client = None
         if settings.GROQ_API_KEY and AsyncGroq:
             try:
@@ -54,12 +70,12 @@ class AIAssistantService:
         # GPT4All local model (fallback) — loaded in background only if Groq is not available
         self._model = None
         self._model_name_in_use = self.model_name
-        if not self._groq_client and GPT4All:
-            logger.info("No Groq API key — starting background GPT4All loader")
+        if not self._nvidia_client and not self._groq_client and GPT4All:
+            logger.info("No hosted AI key — starting background GPT4All loader")
             self._model_loading = True
             self._start_background_load()
-        elif not self._groq_client:
-            logger.warning("No Groq API key and gpt4all not installed — AI will be unavailable")
+        elif not self._nvidia_client and not self._groq_client:
+            logger.warning("No hosted AI key and gpt4all not installed — AI will be unavailable")
             self._model_permanently_failed = True
 
     def _start_background_load(self):
@@ -99,14 +115,32 @@ class AIAssistantService:
 
     @property
     def is_model_available(self) -> bool:
-        if self._groq_client:
+        if self._nvidia_client or self._groq_client:
             return True
         return not self._model_permanently_failed
 
     async def _generate_response(self, prompt: str, system_prompt: str = None) -> Dict:
         """Generate a response — Groq first, GPT4All fallback."""
 
-        # ── Primary: Groq API ────────────────────────────────────────────────
+        if self._nvidia_client:
+            try:
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+
+                completion = await self._nvidia_client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=messages,
+                    max_tokens=600,
+                    temperature=0.3,
+                    stream=False,
+                )
+                text = completion.choices[0].message.content or ""
+                return {"success": True, "response": text.strip(), "usage": "nvidia"}
+            except Exception as e:
+                logger.warning("NVIDIA API error (%s), trying Groq/local fallback", e)
+
         if self._groq_client:
             try:
                 messages = []
@@ -186,7 +220,28 @@ class AIAssistantService:
         GPT4All: tokens appear as the model generates them (~3-5s first token).
         Falls back to a single chunk if streaming is unavailable.
         """
-        # ── Groq streaming ───────────────────────────────────────────────────
+        if self._nvidia_client:
+            try:
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+
+                stream = await self._nvidia_client.chat.completions.create(
+                    model=settings.NVIDIA_MODEL,
+                    messages=messages,
+                    max_tokens=600,
+                    temperature=0.3,
+                    stream=True,
+                )
+                async for chunk in stream:
+                    token = chunk.choices[0].delta.content or ""
+                    if token:
+                        yield token
+                return
+            except Exception as e:
+                logger.warning("NVIDIA streaming error (%s), trying Groq/local fallback", e)
+
         if self._groq_client:
             try:
                 messages = []
