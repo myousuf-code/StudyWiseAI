@@ -13,6 +13,13 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+/** Dispatch this event to trigger a logout from outside React context */
+export const AUTH_LOGOUT_EVENT = 'auth:logout';
+
+// Per-request timeout constants (ms)
+const DEFAULT_TIMEOUT = 30_000;   // 30s for regular endpoints
+const AI_TIMEOUT = 600_000;       // 10min for long-running AI generation
+
 class ApiService {
   private api: AxiosInstance;
 
@@ -22,12 +29,12 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 600000, // 10 minute timeout for AI endpoints
+      timeout: DEFAULT_TIMEOUT,
     });
 
     // Add request interceptor to include auth token
     this.api.interceptors.request.use((config) => {
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -39,10 +46,11 @@ class ApiService {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          // Unauthorized - clear token and redirect to login
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('user');
-          window.location.href = '/';
+          // Unauthorized — clear token and signal logout via custom event
+          // (avoids hard page reload that destroys React state)
+          sessionStorage.removeItem('authToken');
+          sessionStorage.removeItem('user');
+          window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT));
         }
         return Promise.reject(error);
       }
@@ -88,6 +96,11 @@ class ApiService {
     await this.api.delete(`/study-plans/${id}`);
   }
 
+  async updateStudyPlan(id: number, data: CreateStudyPlanRequest): Promise<StudyPlan> {
+    const response = await this.api.put<StudyPlan>(`/study-plans/${id}`, data);
+    return response.data;
+  }
+
   // Progress
   async getProgressSummary(): Promise<ProgressStats> {
     const response = await this.api.get<ProgressStats>('/progress/summary');
@@ -95,8 +108,13 @@ class ApiService {
   }
 
   // AI Assistant
+  async getAiStatus(): Promise<{ status: string; model_loaded: boolean; model_loading: boolean; message: string }> {
+    const response = await this.api.get('/ai/status');
+    return response.data;
+  }
+
   async sendChatMessage(data: ChatRequest): Promise<{ response: string }> {
-    const response = await this.api.post<{ response: string }>('/ai/chat', data);
+    const response = await this.api.post<{ response: string }>('/ai/chat', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 
@@ -117,22 +135,22 @@ class ApiService {
 
   // Natural Language Processing
   async summarizeText(data: { text: string }): Promise<{ summary: string }> {
-    const response = await this.api.post<{ summary: string }>('/ai/summarize', data);
+    const response = await this.api.post<{ summary: string }>('/ai/summarize', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 
-  async analyzeSentiment(data: { text: string }): Promise<{ sentiment: string; confidence: number }> {
-    const response = await this.api.post<{ sentiment: string; confidence: number }>('/ai/sentiment', data);
+  async analyzeSentiment(data: { text: string }): Promise<{ sentiment: string }> {
+    const response = await this.api.post<{ sentiment: string }>('/ai/sentiment', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 
-  async checkGrammar(data: { text: string }): Promise<{ issues: string[]; suggestions: string[] }> {
-    const response = await this.api.post<{ issues: string[]; suggestions: string[] }>('/ai/grammar', data);
+  async checkGrammar(data: { text: string }): Promise<{ result: string }> {
+    const response = await this.api.post<{ result: string }>('/ai/grammar', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 
   async paraphraseText(data: { text: string }): Promise<{ paraphrase: string }> {
-    const response = await this.api.post<{ paraphrase: string }>('/ai/paraphrase', data);
+    const response = await this.api.post<{ paraphrase: string }>('/ai/paraphrase', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 
@@ -143,7 +161,7 @@ class ApiService {
     initial_questions: string;
     session_started: string;
   }> {
-    const response = await this.api.post('/ai/career-counseling/start', data);
+    const response = await this.api.post('/ai/career-counseling/start', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 
@@ -156,7 +174,7 @@ class ApiService {
     action_plan: string;
     generated_at: string;
   }> {
-    const response = await this.api.post('/ai/career-counseling/generate-plan', data);
+    const response = await this.api.post('/ai/career-counseling/generate-plan', data, { timeout: AI_TIMEOUT });
     return response.data;
   }
 

@@ -18,3 +18,46 @@
     transform: translateX(0);
   }
 }
+
+/* =====================================================
+   Accessibility Overrides
+   Applied via CSS classes on <html> by AccessibilityContext
+   ===================================================== */
+
+/* Font size scaling */
+html.a11y-large-text { font-size: 112.5%; } /* 18px base */
+html.a11y-xl-text    { font-size: 125%;    } /* 20px base */
+
+/* High Contrast — invert + hue-rotate restores image colours.
+   Applied to <html> (not body) so position:fixed elements stay in place. */
+html.a11y-high-contrast {
+  filter: invert(1) hue-rotate(180deg);
+}
+html.a11y-high-contrast img,
+html.a11y-high-contrast video,
+html.a11y-high-contrast iframe,
+html.a11y-high-contrast canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Dyslexia-Friendly Font — Verdana is widely recommended */
+html.a11y-dyslexic * {
+  font-family: Verdana, 'DejaVu Sans', 'Trebuchet MS', sans-serif !important;
+  letter-spacing: 0.07em !important;
+  word-spacing: 0.16em !important;
+}
+
+/* Increased line & letter spacing */
+html.a11y-line-spacing * {
+  line-height: 1.9 !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* Reduced Motion */
+html.a11y-reduced-motion *,
+html.a11y-reduced-motion *::before,
+html.a11y-reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

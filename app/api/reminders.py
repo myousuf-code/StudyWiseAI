@@ -2,17 +2,21 @@
 Smart Reminders API Routes
 Intelligent notifications and study session reminders
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.database import User, Reminder
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
+
+VALID_RECURRENCE_PATTERNS = {"daily", "weekly", "monthly"}
 
 # Pydantic models
 class ReminderCreate(BaseModel):
@@ -22,6 +26,13 @@ class ReminderCreate(BaseModel):
     scheduled_time: datetime
     is_recurring: bool = False
     recurrence_pattern: Optional[str] = None  # daily, weekly, monthly
+
+    @field_validator('recurrence_pattern')
+    @classmethod
+    def validate_recurrence(cls, v):
+        if v is not None and v not in VALID_RECURRENCE_PATTERNS:
+            raise ValueError(f"recurrence_pattern must be one of: {', '.join(sorted(VALID_RECURRENCE_PATTERNS))}")
+        return v
 
 class ReminderResponse(BaseModel):
     id: int
@@ -54,7 +65,7 @@ async def create_reminder(
     """Create a new reminder"""
     
     # Validate scheduled time is in the future
-    if reminder.scheduled_time <= datetime.utcnow():
+    if reminder.scheduled_time <= datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Scheduled time must be in the future"
@@ -83,16 +94,18 @@ async def create_reminder(
 async def get_reminders(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    upcoming_only: bool = True
+    upcoming_only: bool = True,
+    skip: int = 0,
+    limit: int = 50
 ):
     """Get all reminders for the current user"""
-    
+
     query = db.query(Reminder).filter(Reminder.user_id == current_user.id)
-    
+
     if upcoming_only:
-        query = query.filter(Reminder.scheduled_time > datetime.utcnow())
-    
-    reminders = query.order_by(Reminder.scheduled_time.asc()).all()
+        query = query.filter(Reminder.scheduled_time > datetime.now(timezone.utc))
+
+    reminders = query.order_by(Reminder.scheduled_time.asc()).offset(skip).limit(limit).all()
     return reminders
 
 @router.get("/{reminder_id}", response_model=ReminderResponse)
@@ -137,7 +150,7 @@ async def update_reminder(
         )
     
     # Update fields
-    for field, value in reminder_update.dict(exclude_none=True).items():
+    for field, value in reminder_update.model_dump(exclude_none=True).items():
         setattr(db_reminder, field, value)
     
     db.commit()
@@ -179,7 +192,7 @@ async def create_study_session_reminder(
 ):
     """Create a reminder for a study session"""
     
-    if start_time <= datetime.utcnow():
+    if start_time <= datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Start time must be in the future"
@@ -210,7 +223,7 @@ async def create_break_reminder(
     """Create a break reminder during study session"""
     
     # Create break reminder for after the study duration
-    break_time = datetime.utcnow() + timedelta(minutes=study_duration)
+    break_time = datetime.now(timezone.utc) + timedelta(minutes=study_duration)
     
     db_reminder = Reminder(
         user_id=current_user.id,
@@ -276,22 +289,22 @@ async def get_upcoming_reminders(
 ):
     """Get reminders coming up in the next specified hours"""
     
-    end_time = datetime.utcnow() + timedelta(hours=hours)
-    
+    end_time = datetime.now(timezone.utc) + timedelta(hours=hours)
+
     reminders = db.query(Reminder).filter(
         Reminder.user_id == current_user.id,
-        Reminder.scheduled_time > datetime.utcnow(),
+        Reminder.scheduled_time > datetime.now(timezone.utc),
         Reminder.scheduled_time <= end_time,
         Reminder.is_sent == False
     ).order_by(Reminder.scheduled_time.asc()).all()
-    
+
     return [
         {
             "id": r.id,
             "title": r.title,
             "message": r.message,
             "scheduled_time": r.scheduled_time,
-            "time_until": str(r.scheduled_time - datetime.utcnow()).split('.')[0]
+            "time_until": str(r.scheduled_time - datetime.now(timezone.utc)).split('.')[0]
         }
         for r in reminders
     ]
@@ -333,9 +346,9 @@ def analyze_study_patterns(progress_records, user) -> List[dict]:
     
     # Create review reminders for subjects not studied recently
     for subject, last_date in subject_last_studied.items():
-        days_ago = (datetime.utcnow() - last_date).days
+        days_ago = (datetime.now(timezone.utc) - last_date).days
         if days_ago > 3:  # Haven't studied this subject in 3 days
-            review_time = datetime.utcnow() + timedelta(hours=2)
+            review_time = datetime.now(timezone.utc) + timedelta(hours=2)
             recommendations.append({
                 "title": f"Review {subject}",
                 "message": f"It's been {days_ago} days since you studied {subject}. Time for a review session!",
@@ -345,29 +358,35 @@ def analyze_study_patterns(progress_records, user) -> List[dict]:
     return recommendations
 
 async def schedule_reminder_notification(reminder_id: int):
-    """Background task to handle reminder notifications"""
-    # In production, this would integrate with email/push notification services
-    # For now, just mark as sent when the time comes
+    """Background task to mark a reminder as sent when its scheduled time arrives.
+    In production, replace the pass block with actual email/push delivery."""
     import asyncio
     from app.core.database import SessionLocal
-    
+
     db = SessionLocal()
     try:
         reminder = db.query(Reminder).filter(Reminder.id == reminder_id).first()
-        if reminder:
-            # Calculate delay until scheduled time
-            delay = (reminder.scheduled_time - datetime.utcnow()).total_seconds()
-            if delay > 0:
-                await asyncio.sleep(delay)
-            
-            # Mark as sent (in production, send actual notification here)
-            reminder.is_sent = True
-            db.commit()
-            
-            # Handle recurring reminders
-            if reminder.is_recurring:
-                create_next_recurring_reminder(reminder, db)
-                
+        if not reminder:
+            return
+
+        delay = (reminder.scheduled_time - datetime.now(timezone.utc)).total_seconds()
+        if delay > 0:
+            await asyncio.sleep(delay)
+
+        logger.info(
+            "Reminder triggered: id=%s title=%r user_id=%s",
+            reminder.id, reminder.title, reminder.user_id
+        )
+        # TODO: send actual notification (email / push) here
+        # e.g. await send_email(to=user.email, subject=reminder.title, body=reminder.message)
+
+        reminder.is_sent = True
+        db.commit()
+
+        if reminder.is_recurring:
+            create_next_recurring_reminder(reminder, db)
+    except Exception:
+        logger.exception("Error processing reminder id=%s", reminder_id)
     finally:
         db.close()
 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, LoginRequest, RegisterRequest } from '../types/index';
-import { apiService } from '../services/api';
+import { apiService, AUTH_LOGOUT_EVENT } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -20,46 +20,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Check if user is already logged in
-    const token = localStorage.getItem('authToken');
-    const savedUser = localStorage.getItem('user');
+    const token = sessionStorage.getItem('authToken');
+    const savedUser = sessionStorage.getItem('user');
 
     if (token && savedUser) {
       try {
         setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
+      } catch {
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('authToken');
       }
     }
     setIsLoading(false);
   }, []);
 
+  // Listen for 401 logout events dispatched by the API service
+  useEffect(() => {
+    const handleForceLogout = () => setUser(null);
+    window.addEventListener(AUTH_LOGOUT_EVENT, handleForceLogout);
+    return () => window.removeEventListener(AUTH_LOGOUT_EVENT, handleForceLogout);
+  }, []);
+
   const login = async (credentials: LoginRequest) => {
-    try {
-      const response = await apiService.login(credentials);
-      localStorage.setItem('authToken', response.access_token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      setUser(response.user);
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    }
+    const response = await apiService.login(credentials);
+    sessionStorage.setItem('authToken', response.access_token);
+    sessionStorage.setItem('user', JSON.stringify(response.user));
+    setUser(response.user);
   };
 
   const register = async (data: RegisterRequest) => {
-    try {
-      await apiService.register(data);
-      // After registration, user needs to log in
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
+    await apiService.register(data);
+    // After registration, user needs to log in
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('user');
     setUser(null);
   };
 

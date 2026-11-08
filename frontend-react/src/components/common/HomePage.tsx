@@ -60,20 +60,20 @@ const HomePage: React.FC<HomePageProps> = ({ onAskAI, onStartStudy }) => {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center border-t-4 border-blue-600">
-              <div className="text-4xl font-bold text-blue-600 mb-2">25min</div>
-              <p className="text-gray-600 dark:text-gray-300">Optimal Session Length</p>
+              <div className="text-4xl font-bold text-blue-600 mb-2">Local</div>
+              <p className="text-gray-600 dark:text-gray-300">AI — no data leaves your device</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center border-t-4 border-green-600">
-              <div className="text-4xl font-bold text-green-600 mb-2">∞</div>
-              <p className="text-gray-600 dark:text-gray-300">AI Questions Answered</p>
+              <div className="text-4xl font-bold text-green-600 mb-2">100%</div>
+              <p className="text-gray-600 dark:text-gray-300">Private — AI runs locally</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center border-t-4 border-purple-600">
               <div className="text-4xl font-bold text-purple-600 mb-2">6</div>
               <p className="text-gray-600 dark:text-gray-300">AI-Powered Tools</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center border-t-4 border-orange-600">
-              <div className="text-4xl font-bold text-orange-600 mb-2">2x</div>
-              <p className="text-gray-600 dark:text-gray-300">Faster Learning</p>
+              <div className="text-4xl font-bold text-orange-600 mb-2">25min</div>
+              <p className="text-gray-600 dark:text-gray-300">Pomodoro-optimised sessions</p>
             </div>
           </div>
         </div>

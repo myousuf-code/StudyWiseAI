@@ -1,110 +1,271 @@
 """
 AI Assistant Service
-Local GPT4All integration for study assistance and chat
+Groq API (primary) with GPT4All local fallback
 """
-from gpt4all import GPT4All
+import logging
 from typing import List, Dict, Optional
 from app.core.config import settings
 from app.models.database import User, StudyPlan, ProgressRecord
 import asyncio
-import functools
 import threading
 
+logger = logging.getLogger(__name__)
+
+
+def _try_import_groq():
+    try:
+        from groq import AsyncGroq
+        return AsyncGroq
+    except ImportError:
+        return None
+
+
+def _try_import_gpt4all():
+    try:
+        from gpt4all import GPT4All
+        return GPT4All
+    except ImportError:
+        return None
+
+
+AsyncGroq = _try_import_groq()
+GPT4All = _try_import_gpt4all()
+
+
 class AIAssistantService:
-    """Service class for local AI-powered study assistance using GPT4All"""
-    
+    """AI service: Groq API primary, GPT4All local fallback"""
+
     def __init__(self):
-        # Use orca-mini model (more stable than Phi-3)
-        # Orca-mini: Smaller, more stable with good quality
-        self.model_name = "orca-mini-3b-gguf2-q4_0.gguf"
-        self.fallback_model_name = "Phi-3-mini-4k-instruct.Q4_0.gguf"  # Fallback if primary fails
+        self.model_name = settings.LOCAL_AI_MODEL
+        self.fallback_model_name = settings.LOCAL_AI_FALLBACK_MODEL
+        self._model_lock = threading.Lock()
+        self._model_loading = False
+        self._model_permanently_failed = False
+
+        # Groq client (primary) — instantiated only when an API key is present
+        self._groq_client = None
+        if settings.GROQ_API_KEY and AsyncGroq:
+            try:
+                self._groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+                logger.info("Groq API client ready (model: %s)", settings.GROQ_MODEL)
+            except Exception as e:
+                logger.warning("Groq client init failed: %s", e)
+
+        # GPT4All local model (fallback) — loaded in background only if Groq is not available
         self._model = None
         self._model_name_in_use = self.model_name
-        self._last_request_time = None
-        self._model_lock = threading.Lock()  # Prevent concurrent model access (causes access violations)
-        
+        if not self._groq_client and GPT4All:
+            logger.info("No Groq API key — starting background GPT4All loader")
+            self._model_loading = True
+            self._start_background_load()
+        elif not self._groq_client:
+            logger.warning("No Groq API key and gpt4all not installed — AI will be unavailable")
+            self._model_permanently_failed = True
+
+    def _start_background_load(self):
+        """Load (or auto-download) the GPT4All model in a background thread."""
+        def _load():
+            try:
+                logger.info("Background AI loader: loading %s (will auto-download if not present)", self._model_name_in_use)
+                model = GPT4All(self._model_name_in_use)
+                with self._model_lock:
+                    self._model = model
+                self._model_loading = False
+                logger.info("Background AI loader: model ready — %s", self._model_name_in_use)
+            except Exception as e:
+                logger.warning("Background AI loader: primary model failed (%s), trying fallback", e)
+                try:
+                    self._model_name_in_use = self.fallback_model_name
+                    model = GPT4All(self.fallback_model_name)
+                    with self._model_lock:
+                        self._model = model
+                    self._model_loading = False
+                    logger.info("Background AI loader: fallback model ready — %s", self.fallback_model_name)
+                except Exception as e2:
+                    logger.error("Background AI loader: both models failed. Primary: %s, Fallback: %s", e, e2)
+                    self._model_permanently_failed = True
+                    self._model_loading = False
+
+        t = threading.Thread(target=_load, daemon=True, name="ai-model-loader")
+        t.start()
+
     def _cleanup_model(self):
-        """Properly close and cleanup the model"""
         if self._model is not None:
             try:
                 self._model.close()
-            except:
+            except Exception:
                 pass
         self._model = None
-        
-    def _get_model(self):
-        """Lazy load the model to avoid loading it on import"""
-        if self._model is None:
-            try:
-                print(f"Loading local AI model: {self._model_name_in_use}...")
-                self._model = GPT4All(self._model_name_in_use)
-                print(f"✅ Model loaded successfully: {self._model_name_in_use}")
-            except Exception as e:
-                print(f"⚠️ Failed to load {self._model_name_in_use}: {e}")
-                
-                # Try fallback model
-                if self._model_name_in_use != self.fallback_model_name:
-                    print(f"Trying fallback model: {self.fallback_model_name}...")
-                    try:
-                        self._model_name_in_use = self.fallback_model_name
-                        self._model = GPT4All(self.fallback_model_name)
-                        print(f"✅ Fallback model loaded: {self.fallback_model_name}")
-                    except Exception as e2:
-                        print(f"❌ Fallback model also failed: {e2}")
-                        raise Exception(f"Both models failed to load. Primary: {e}, Fallback: {e2}")
-                else:
-                    raise Exception(f"Failed to load model: {e}")
-        return self._model
-        
+
+    @property
+    def is_model_available(self) -> bool:
+        if self._groq_client:
+            return True
+        return not self._model_permanently_failed
+
     async def _generate_response(self, prompt: str, system_prompt: str = None) -> Dict:
-        """Generate response using local GPT4All model"""
+        """Generate a response — Groq first, GPT4All fallback."""
+
+        # ── Primary: Groq API ────────────────────────────────────────────────
+        if self._groq_client:
+            try:
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+
+                completion = await self._groq_client.chat.completions.create(
+                    model=settings.GROQ_MODEL,
+                    messages=messages,
+                    max_tokens=600,
+                    temperature=0.3,
+                    stream=False,
+                )
+                text = completion.choices[0].message.content or ""
+                return {"success": True, "response": text.strip(), "usage": "groq"}
+            except Exception as e:
+                logger.warning("Groq API error (%s), falling back to local model", e)
+                # Fall through to GPT4All below
+
+        # ── Fallback: GPT4All local ──────────────────────────────────────────
+        if self._model_loading:
+            return {
+                "success": True,
+                "response": (
+                    "The AI model is currently loading (first run downloads ~2 GB automatically). "
+                    "Please try again in a moment."
+                ),
+                "usage": "loading",
+            }
+
+        if self._model_permanently_failed or self._model is None:
+            return {
+                "success": True,
+                "response": (
+                    "The AI is temporarily unavailable. "
+                    "Add a GROQ_API_KEY to your .env file for instant AI access, "
+                    "or wait for the local model to finish downloading."
+                ),
+                "usage": "fallback_unavailable",
+            }
+
         try:
-            # Use orca-mini instruction format: ### System / ### User / ### Response
-            # Without this format the model outputs nothing (0 chars)
             if system_prompt:
                 full_prompt = f"### System:\n{system_prompt}\n\n### User:\n{prompt}\n\n### Response:\n"
             else:
                 full_prompt = f"### User:\n{prompt}\n\n### Response:\n"
-                
-            # Run model generation in thread pool to avoid blocking
-            # Lock ensures only one generation runs at a time - concurrent access causes access violations
+
             loop = asyncio.get_event_loop()
-            
+
             def generate():
                 with self._model_lock:
                     try:
-                        model = self._get_model()
-                        response = model.generate(
-                            full_prompt,
-                            max_tokens=600,
-                            temp=0.3,
-                            top_p=0.7
-                        )
+                        response = self._model.generate(full_prompt, max_tokens=600, temp=0.3, top_p=0.7)
                         return response
                     except Exception as generation_error:
                         error_str = str(generation_error)
-                        print(f"[AI] Generation error: {error_str}")
-                        # On memory/access violation, clean up model so next call reloads it fresh
+                        logger.error("GPT4All generation error: %s", error_str)
                         if "access violation" in error_str.lower() or "segmentation" in error_str.lower():
-                            print("[AI] Detected memory error, cleaning up model for next request...")
+                            logger.warning("Memory error — reloading model")
                             self._cleanup_model()
+                            self._model_loading = True
+                            self._start_background_load()
                         raise
-            
+
             response = await loop.run_in_executor(None, generate)
-            
-            return {
-                "success": True,
-                "response": response.strip(),
-                "usage": "local"
-            }
-                
+            return {"success": True, "response": response.strip(), "usage": "local"}
+
         except Exception as e:
-            print(f"[AI] Response generation failed: {str(e)}")
-            return {
-                "success": False,
-                "error": f"Local AI error: {str(e)}"
-            }
-        
+            logger.error("Response generation failed: %s", e)
+            return {"success": False, "error": f"AI error: {str(e)}"}
+
+    async def stream_response(self, prompt: str, system_prompt: str = None):
+        """
+        Async generator that yields text tokens as they are produced.
+        Groq: < 200ms first token.
+        GPT4All: tokens appear as the model generates them (~3-5s first token).
+        Falls back to a single chunk if streaming is unavailable.
+        """
+        # ── Groq streaming ───────────────────────────────────────────────────
+        if self._groq_client:
+            try:
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+
+                stream = await self._groq_client.chat.completions.create(
+                    model=settings.GROQ_MODEL,
+                    messages=messages,
+                    max_tokens=600,
+                    temperature=0.3,
+                    stream=True,
+                )
+                async for chunk in stream:
+                    token = chunk.choices[0].delta.content or ""
+                    if token:
+                        yield token
+                return
+            except Exception as e:
+                logger.warning("Groq streaming error (%s), falling back to local", e)
+                # Fall through to GPT4All
+
+        # ── GPT4All streaming ────────────────────────────────────────────────
+        if self._model_loading:
+            yield "The AI model is currently loading. Please try again in a moment."
+            return
+
+        if self._model_permanently_failed or self._model is None:
+            yield (
+                "The AI is temporarily unavailable. "
+                "Set GROQ_API_KEY in your .env file for instant access."
+            )
+            return
+
+        try:
+            if system_prompt:
+                full_prompt = f"### System:\n{system_prompt}\n\n### User:\n{prompt}\n\n### Response:\n"
+            else:
+                full_prompt = f"### User:\n{prompt}\n\n### Response:\n"
+
+            # GPT4All streaming via a thread + asyncio Queue
+            queue: asyncio.Queue = asyncio.Queue()
+            loop = asyncio.get_event_loop()
+            DONE_SENTINEL = object()
+
+            def _run():
+                def callback(token_id, response_text):
+                    loop.call_soon_threadsafe(queue.put_nowait, response_text)
+                    return True  # returning False stops generation
+
+                with self._model_lock:
+                    try:
+                        self._model.generate(
+                            full_prompt,
+                            max_tokens=600,
+                            temp=0.3,
+                            top_p=0.7,
+                            streaming=True,
+                            callback=callback,
+                        )
+                    except Exception as gen_err:
+                        logger.error("GPT4All stream error: %s", gen_err)
+                loop.call_soon_threadsafe(queue.put_nowait, DONE_SENTINEL)
+
+            thread = threading.Thread(target=_run, daemon=True)
+            thread.start()
+
+            while True:
+                token = await queue.get()
+                if token is DONE_SENTINEL:
+                    break
+                if token:
+                    yield token
+
+        except Exception as e:
+            logger.error("Stream generation failed: %s", e)
+            yield "Sorry, an error occurred while generating the response."
+
     async def generate_study_plan(
         self, 
         user: User, 
@@ -262,20 +423,18 @@ class AIAssistantService:
             
             # Check both success AND that response is not empty
             if ai_response.get("success") and ai_response.get("response", "").strip():
-                print(f"[AI] Career counseling AI returned {len(ai_response.get('response', ''))} chars")
+                logger.debug("Career counseling AI returned %d chars", len(ai_response.get("response", "")))
                 return ai_response
             else:
-                # Fall back to template if empty or failed
-                empty_response = not ai_response.get("response", "").strip()
-                if empty_response:
-                    print(f"[AI] Career counseling AI returned empty response, using template for {target_profession}")
+                if not ai_response.get("response", "").strip():
+                    logger.warning("Career counseling AI returned empty response, using template for %s", target_profession)
                 return self._get_career_questions_template(target_profession)
-                
+
         except asyncio.TimeoutError:
-            print(f"[AI] Career counseling AI timeout, using template for {target_profession}")
+            logger.warning("Career counseling AI timeout, using template for %s", target_profession)
             return self._get_career_questions_template(target_profession)
         except Exception as e:
-            print(f"[AI] Career counseling error: {e}, using template")
+            logger.warning("Career counseling error: %s, using template", e)
             return self._get_career_questions_template(target_profession)
 
     def _get_career_questions_template(self, target_profession: str) -> Dict:
@@ -348,19 +507,17 @@ Be specific and actionable."""
             if ai_response.get("success") and ai_response.get("response", "").strip():
                 return ai_response
             else:
-                # Fall back to template if empty or failed
-                empty_response = not ai_response.get("response", "").strip()
-                if empty_response:
-                    print(f"[AI] Career plan AI returned empty response, using template for {target_profession}")
+                if not ai_response.get("response", "").strip():
+                    logger.warning("Career plan AI returned empty response, using template for %s", target_profession)
                 else:
-                    print(f"[AI] Career plan AI failed, using template for {target_profession}")
+                    logger.warning("Career plan AI failed, using template for %s", target_profession)
                 return self._get_career_plan_template(target_profession)
-                
+
         except asyncio.TimeoutError:
-            print(f"[AI] Career plan generation timeout, using template for {target_profession}")
+            logger.warning("Career plan generation timeout, using template for %s", target_profession)
             return self._get_career_plan_template(target_profession)
         except Exception as e:
-            print(f"[AI] Career plan error: {e}, using template")
+            logger.warning("Career plan error: %s, using template", e)
             return self._get_career_plan_template(target_profession)
             
     # Profession-specific plan data keyed by keyword categories
@@ -853,6 +1010,59 @@ Remember: Consistency beats intensity. Dedicate focused time each day and review
         Focus on tasks that can be integrated into a weekly study schedule.
         """
 
+        return await self._generate_response(user_prompt, system_prompt)
+
+    async def summarize_text(self, text: str) -> Dict:
+        """Summarize the provided text using the local AI model"""
+        system_prompt = (
+            "You are a precise text summarizer. "
+            "Produce a concise summary that retains all key facts and main points."
+        )
+        user_prompt = (
+            f"Summarize the following text in a few sentences:\n\n{text}\n\n"
+            "Provide only the summary, no extra commentary."
+        )
+        return await self._generate_response(user_prompt, system_prompt)
+
+    async def analyze_sentiment(self, text: str) -> Dict:
+        """Analyze the sentiment/tone of the provided text"""
+        system_prompt = (
+            "You are a sentiment analysis expert. "
+            "Respond with: Overall Sentiment (Positive/Negative/Neutral), "
+            "a confidence percentage, and the detected tone in one short sentence."
+        )
+        user_prompt = (
+            f"Analyze the sentiment of this text:\n\n{text}\n\n"
+            "Format your response as:\n"
+            "Sentiment: <Positive|Negative|Neutral>\n"
+            "Confidence: <0-100>%\n"
+            "Tone: <one sentence describing the tone>"
+        )
+        return await self._generate_response(user_prompt, system_prompt)
+
+    async def check_grammar(self, text: str) -> Dict:
+        """Check grammar and suggest improvements"""
+        system_prompt = (
+            "You are a grammar and writing quality expert. "
+            "Identify grammatical issues and provide clear, actionable suggestions."
+        )
+        user_prompt = (
+            f"Check the grammar and writing quality of this text:\n\n{text}\n\n"
+            "List any issues found (or confirm the text is correct), "
+            "then provide improvement suggestions."
+        )
+        return await self._generate_response(user_prompt, system_prompt)
+
+    async def paraphrase_text(self, text: str) -> Dict:
+        """Paraphrase the provided text"""
+        system_prompt = (
+            "You are a skilled writer. Paraphrase the given text using different vocabulary "
+            "and sentence structures while preserving the original meaning completely."
+        )
+        user_prompt = (
+            f"Paraphrase the following text:\n\n{text}\n\n"
+            "Provide only the paraphrased version, no extra commentary."
+        )
         return await self._generate_response(user_prompt, system_prompt)
 
 # Create service instance

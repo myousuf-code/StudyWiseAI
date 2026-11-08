@@ -3,30 +3,31 @@ Database Models for StudyWiseAI
 SQLAlchemy models for all entities
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase, relationship
 from datetime import datetime
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 class User(Base):
     """User model for authentication and profile"""
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    full_name = Column(String(255))
     is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=False)  # Set True after email confirmation
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
     
     # Profile information
-    learning_style = Column(String)  # visual, auditory, kinesthetic
+    learning_style = Column(String(20))  # visual, auditory, kinesthetic
     study_goals = Column(Text)
-    timezone = Column(String, default="UTC")
+    timezone = Column(String(50), default="UTC")
     
     # Relationships
     study_plans = relationship("StudyPlan", back_populates="user")
@@ -42,10 +43,10 @@ class StudyPlan(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String, nullable=False)
+    title = Column(String(255), nullable=False)
     description = Column(Text)
-    subject = Column(String, nullable=False)
-    difficulty_level = Column(String)  # beginner, intermediate, advanced
+    subject = Column(String(100), nullable=False)
+    difficulty_level = Column(String(20))  # beginner, intermediate, advanced
     estimated_duration = Column(Integer)  # in minutes
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
@@ -67,12 +68,12 @@ class StudySession(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     study_plan_id = Column(Integer, ForeignKey("study_plans.id"))
-    title = Column(String, nullable=False)
+    title = Column(String(255), nullable=False)
     duration = Column(Integer, nullable=False)  # in minutes
     actual_duration = Column(Integer)  # actual time spent
     start_time = Column(DateTime)
     end_time = Column(DateTime)
-    status = Column(String, default="planned")  # planned, active, completed, paused
+    status = Column(String(20), default="planned")  # planned, active, completed, paused
     
     # Session data
     focus_score = Column(Float)  # 1-10 scale
@@ -91,15 +92,15 @@ class ProgressRecord(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
-    subject = Column(String)
-    topic = Column(String)
+    subject = Column(String(100))
+    topic = Column(String(255))
     
     # Progress metrics
     time_spent = Column(Integer)  # minutes
     sessions_completed = Column(Integer)
     accuracy_score = Column(Float)  # percentage
     retention_score = Column(Float)  # AI-calculated retention
-    difficulty_level = Column(String)
+    difficulty_level = Column(String(20))
     
     # AI insights
     learning_patterns = Column(JSON)
@@ -114,13 +115,13 @@ class Reminder(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String, nullable=False)
+    title = Column(String(255), nullable=False)
     message = Column(Text)
-    reminder_type = Column(String)  # study_session, break, review, custom
+    reminder_type = Column(String(30))  # study_session, break, review, custom
     scheduled_time = Column(DateTime, nullable=False)
     is_sent = Column(Boolean, default=False)
     is_recurring = Column(Boolean, default=False)
-    recurrence_pattern = Column(String)  # daily, weekly, monthly
+    recurrence_pattern = Column(String(20))  # daily, weekly, monthly
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -134,7 +135,7 @@ class ChatMessage(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     message = Column(Text, nullable=False)
     response = Column(Text)
-    message_type = Column(String, default="question")  # question, study_help, general
+    message_type = Column(String(30), default="question")  # question, study_help, general
     timestamp = Column(DateTime, default=datetime.utcnow)
     
     # AI context
@@ -150,8 +151,8 @@ class CareerCounselingSession(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    target_profession = Column(String, nullable=False)
-    session_status = Column(String, default="active")  # active, completed, paused
+    target_profession = Column(String(255), nullable=False)
+    session_status = Column(String(20), default="active")  # active, completed, paused
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     
@@ -169,12 +170,12 @@ class LearningResource(Base):
     __tablename__ = "learning_resources"
     
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
+    title = Column(String(255), nullable=False)
     description = Column(Text)
-    resource_type = Column(String)  # article, video, quiz, flashcards
-    subject = Column(String)
-    difficulty_level = Column(String)
-    url = Column(String)
+    resource_type = Column(String(30))  # article, video, quiz, flashcards
+    subject = Column(String(100))
+    difficulty_level = Column(String(20))
+    url = Column(String(2048))
     content = Column(Text)  # For text-based resources
     tags = Column(JSON)  # Searchable tags
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -3,39 +3,49 @@ StudyWiseAI FastAPI Application
 Main application entry point
 """
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.database import create_tables
+from app.core.limiter import limiter
 from app.api import auth, study_plans, ai_assistant, progress, reminders
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler — runs setup on start, teardown on stop"""
+    create_tables()
+    yield
 
 # Create FastAPI instance
 app = FastAPI(
     title="StudyWiseAI API",
     description="AI-powered learning platform with personalized study plans and smart features",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    lifespan=lifespan,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
 )
 
-# Initialize database tables on startup
-@app.on_event("startup")
-async def startup_event():
-    """Create database tables on startup"""
-    create_tables()
+# Attach rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_HOSTS + ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],  # Add Vite dev server
+    allow_origins=settings.ALLOWED_HOSTS + settings.CORS_EXTRA_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 # Include API routes
@@ -76,21 +86,6 @@ else:
     async def home(request: Request):
         """Home page route"""
         return templates.TemplateResponse("index_bulletproof.html", {"request": request})
-
-    @app.get("/full", response_class=HTMLResponse)
-    async def full_page(request: Request):
-        """Full version page for comparison"""
-        return templates.TemplateResponse("index.html", {"request": request})
-
-    @app.get("/test", response_class=HTMLResponse)
-    async def test_page(request: Request):
-        """Test page for debugging"""
-        return templates.TemplateResponse("test.html", {"request": request})
-
-    @app.get("/progressive", response_class=HTMLResponse)
-    async def progressive_test(request: Request):
-        """Progressive test page to identify issues"""
-        return templates.TemplateResponse("progressive_test.html", {"request": request})
 
 @app.get("/health")
 async def health_check():

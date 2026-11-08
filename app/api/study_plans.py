@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -94,16 +94,18 @@ async def create_study_plan(
 async def get_study_plans(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    active_only: bool = True
+    active_only: bool = True,
+    skip: int = 0,
+    limit: int = 50
 ):
     """Get all study plans for the current user"""
-    
+
     query = db.query(StudyPlan).filter(StudyPlan.user_id == current_user.id)
-    
+
     if active_only:
         query = query.filter(StudyPlan.is_active == True)
-    
-    plans = query.order_by(StudyPlan.created_at.desc()).all()
+
+    plans = query.order_by(StudyPlan.created_at.desc()).offset(skip).limit(limit).all()
     return plans
 
 @router.get("/{plan_id}", response_model=StudyPlanResponse)
@@ -147,12 +149,11 @@ async def update_study_plan(
             detail="Study plan not found"
         )
     
-    # Update fields
-    for field, value in plan_update.dict().items():
-        if value is not None:
-            setattr(db_plan, field, value)
-    
-    db_plan.updated_at = datetime.utcnow()
+    # Update only fields that were explicitly provided
+    for field, value in plan_update.model_dump(exclude_unset=True).items():
+        setattr(db_plan, field, value)
+
+    db_plan.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(db_plan)
     
@@ -179,8 +180,47 @@ async def delete_study_plan(
     
     db_plan.is_active = False
     db.commit()
-    
+
     return {"message": "Study plan deactivated successfully"}
+
+@router.post("/sessions", response_model=StudySessionResponse)
+async def create_standalone_study_session(
+    session: StudySessionCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a study session without a specific plan (Pomodoro / quick sessions)"""
+    db_session = StudySession(
+        user_id=current_user.id,
+        study_plan_id=session.study_plan_id,
+        title=session.title,
+        duration=session.duration,
+        topics_covered={"topics": session.topics_covered} if session.topics_covered else None
+    )
+    db.add(db_session)
+    db.commit()
+    db.refresh(db_session)
+    return db_session
+
+@router.post("/sessions/{session_id}/complete")
+async def complete_study_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Mark a study session as completed"""
+    from datetime import datetime, timezone
+    session = db.query(StudySession).filter(
+        StudySession.id == session_id,
+        StudySession.user_id == current_user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    session.status = "completed"
+    session.end_time = datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Session completed", "session_id": session_id}
 
 @router.post("/{plan_id}/sessions", response_model=StudySessionResponse)
 async def create_study_session(

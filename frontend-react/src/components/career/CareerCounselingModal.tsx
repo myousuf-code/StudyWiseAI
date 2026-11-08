@@ -51,16 +51,13 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
 
     const profession = extractProfession(targetProfession);
     setTargetProfession(profession); // update state to cleaned value
-    console.log('Starting career counseling for:', profession);
     setLoading(true);
     setError('');
     try {
       const response = await apiService.startCareerCounseling({ target_profession: profession });
-      console.log('Career counseling response:', response);
       setQuestions(response.initial_questions);
       setCurrentStep('questions');
     } catch (error: any) {
-      console.error('Error starting career counseling:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to start career counseling session';
       setError(`Error: ${errorMessage}`);
     } finally {
@@ -74,7 +71,6 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
       return;
     }
 
-    console.log('Generating action plan for:', targetProfession);
     setLoading(true);
     setError('');
     try {
@@ -82,12 +78,10 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
         target_profession: targetProfession,
         user_responses: userResponses
       });
-      console.log('Action plan response:', response);
       setActionPlan(response.action_plan);
       setSessionId(response.session_id);
       setCurrentStep('plan');
     } catch (error: any) {
-      console.error('Error generating action plan:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to generate career action plan';
       setError(`Error: ${errorMessage}`);
     } finally {
@@ -96,16 +90,13 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
   };
 
   const loadCareerHistory = async () => {
-    console.log('Loading career history...');
     setLoading(true);
     setError('');
     try {
       const response = await apiService.getCareerCounselingHistory();
-      console.log('Career history response:', response);
       setSessions(response);
       setShowHistory(true);
     } catch (error: any) {
-      console.error('Error loading career history:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to load career counseling history';
       setError(`Error: ${errorMessage}`);
     } finally {
@@ -119,7 +110,6 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
       return;
     }
 
-    console.log('Converting career plan to study plan...');
     setConvertingToPlan(true);
     setError('');
     setConversionSuccess('');
@@ -128,7 +118,6 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
         session_id: sessionId,
         plan_title: `Career Path: ${targetProfession}`
       });
-      console.log('Conversion response:', response);
       if (response.success) {
         setConversionSuccess(`✅ ${response.message}
         
@@ -142,7 +131,6 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
 • Track your progress toward your career goals`);
       }
     } catch (error: any) {
-      console.error('Error converting to study plan:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to convert career plan to study plan';
       setError(`Error: ${errorMessage}`);
     } finally {
@@ -167,8 +155,8 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
 
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Login Required">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Login Required</h2>
           <p className="text-gray-600 mb-4">You need to be logged in to use the career counseling feature.</p>
           <div className="flex gap-4">
@@ -185,8 +173,8 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Career Counseling">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Career Counseling</h2>
           <div className="flex gap-2">
@@ -264,7 +252,7 @@ const CareerCounselingModal: React.FC<CareerCounselingModalProps> = ({ isOpen, o
                     {session.has_action_plan && session.action_plan && (
                       <div className="mt-4">
                         <h5 className="font-medium mb-2">Action Plan:</h5>
-                        <div className="bg-white p-3 rounded border text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                        <div className="bg-white dark:bg-gray-700 p-3 rounded border dark:border-gray-600 text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
                           {session.action_plan}
                         </div>
                         <div className="mt-3">

@@ -4,18 +4,19 @@ User registration, login, and profile management
 """
 from datetime import timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 
 from app.core.database import get_db
 from app.core.auth import (
-    authenticate_user, 
-    create_access_token, 
+    authenticate_user,
+    create_access_token,
     get_password_hash,
     get_current_user
 )
+from app.core.limiter import limiter
 from app.models.database import User
 from app.core.config import settings
 
@@ -50,8 +51,13 @@ class UserProfile(BaseModel):
     study_goals: str
     timezone: str
 
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
 @router.post("/register", response_model=UserResponse)
-async def register(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user already exists
     if db.query(User).filter(User.email == user.email).first():
@@ -66,6 +72,18 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
             detail="Username already taken"
         )
     
+    # Validate password length before hashing (bcrypt silently truncates at 72 bytes)
+    if len(user.password.encode('utf-8')) > 72:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password must be 72 characters or fewer"
+        )
+    if len(user.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Password must be at least 8 characters"
+        )
+
     # Create new user
     db_user = User(
         email=user.email,
@@ -81,7 +99,8 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """User login"""
     # OAuth2PasswordRequestForm's 'username' field is used for email in our case
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -91,12 +110,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    # Update last_login only on actual login, not on every authenticated request
+    from datetime import datetime, timezone
+    user.last_login = datetime.now(timezone.utc)
+    db.commit()
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -127,21 +151,31 @@ async def update_profile(
 
 @router.post("/change-password")
 async def change_password(
-    old_password: str,
-    new_password: str,
+    request: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Change user password"""
     from app.core.auth import verify_password
-    
-    if not verify_password(old_password, current_user.hashed_password):
+
+    if not verify_password(request.old_password, current_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect password"
         )
-    
-    current_user.hashed_password = get_password_hash(new_password)
+
+    if len(request.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="New password must be at least 8 characters"
+        )
+    if len(request.new_password.encode('utf-8')) > 72:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="New password must be 72 characters or fewer"
+        )
+
+    current_user.hashed_password = get_password_hash(request.new_password)
     db.commit()
-    
+
     return {"message": "Password updated successfully"}

@@ -7,9 +7,10 @@ interface TabNavProps {
   onTabChange: (tab: 'home' | 'study' | 'chat' | 'progress' | 'planner' | 'nlp' | 'career') => void;
   onLoginClick?: () => void;
   onRegisterClick?: () => void;
+  onA11yClick?: () => void;
 }
 
-const TabNavigation: React.FC<TabNavProps> = ({ activeTab, onTabChange, onLoginClick, onRegisterClick }) => {
+const TabNavigation: React.FC<TabNavProps> = ({ activeTab, onTabChange, onLoginClick, onRegisterClick, onA11yClick }) => {
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
   const tabs = [
@@ -50,6 +51,14 @@ const TabNavigation: React.FC<TabNavProps> = ({ activeTab, onTabChange, onLoginC
 
           {/* Right Actions */}
           <div className="flex items-center space-x-4">
+            <button
+              onClick={onA11yClick}
+              className="px-3 py-2 rounded-lg text-white hover:bg-white/20 transition-colors text-xl"
+              title="Accessibility Settings"
+              aria-label="Open accessibility settings"
+            >
+              ♿
+            </button>
             <button
               onClick={toggleTheme}
               className="px-3 py-2 rounded-lg text-white hover:bg-white/20 transition-colors text-xl"

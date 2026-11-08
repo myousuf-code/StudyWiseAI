@@ -1,0 +1,377 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyWiseAI — SAFE AI CUP 2025</title>
+<style>
+/* ── Print: A0 portrait ── */
+@page { size: 841mm 1189mm portrait; margin: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 841mm; height: 1189mm;
+  background: radial-gradient(ellipse at 30% 0%, #5a0090 0%, #2a0055 45%, #0d001f 100%);
+  font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+
+/* ── PHONE SHELL ── */
+.phone {
+  width: 772mm; height: 1152mm;
+  background: linear-gradient(170deg, #3d0070 0%, #22004a 55%, #0f001c 100%);
+  border-radius: 58mm;
+  box-shadow: 0 0 0 7mm #7c22d4, 0 0 60mm 14mm rgba(140,50,255,0.5), inset 0 0 30mm 6mm rgba(255,255,255,0.03);
+  display: flex; flex-direction: column; overflow: hidden; position: relative;
+}
+.phone::after {
+  content:''; position:absolute; right:-14mm; top:120mm;
+  width:6mm; height:60mm; background:#7c22d4; border-radius:0 3mm 3mm 0;
+  box-shadow: 0 75mm 0 #7c22d4, 0 140mm 0 #7c22d4;
+}
+.phone::before {
+  content:''; position:absolute; left:-14mm; top:130mm;
+  width:6mm; height:45mm; background:#7c22d4; border-radius:3mm 0 0 3mm;
+  box-shadow: 0 60mm 0 #7c22d4;
+}
+
+/* ── Notch ── */
+.notch {
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:90mm; height:14mm; background:#0f001c;
+  border-radius:0 0 14mm 14mm;
+  display:flex; align-items:center; justify-content:center; gap:4mm; z-index:20;
+}
+.cam { width:7mm; height:7mm; border-radius:50%; background:#1e0035; border:1.5mm solid #5a10a0; }
+.spk { width:24mm; height:3mm; background:#1e0035; border-radius:2mm; border:1mm solid #4a0880; }
+
+/* ── Status bar ── */
+.status {
+  flex-shrink:0; height:26mm;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 16mm; background:rgba(0,0,0,0.25);
+  border-bottom:0.5mm solid rgba(160,60,255,0.25);
+  font-size:9mm; font-weight:600; color:rgba(255,255,255,0.65);
+}
+.s-icons { display:flex; gap:4mm; font-size:9mm; }
+
+/* ── Screen ── */
+.screen {
+  flex:1; overflow:hidden;
+  padding:7mm 12mm 5mm;
+  display:flex; flex-direction:column; gap:6mm;
+}
+
+/* ── APP HEADER ── */
+.app-header {
+  flex-shrink:0;
+  background:linear-gradient(130deg, #6a12d4 0%, #9b12c8 50%, #4a00a0 100%);
+  border-radius:16mm; padding:9mm 14mm;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 4mm 20mm rgba(120,0,255,0.55);
+  position:relative; overflow:hidden;
+}
+.app-header::after {
+  content:''; position:absolute; top:-20mm; right:-20mm;
+  width:80mm; height:80mm;
+  background:radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+  border-radius:50%;
+}
+.logo-block { display:flex; flex-direction:column; gap:2mm; }
+.logo-name  { font-size:42mm; font-weight:900; color:#fff; letter-spacing:-1.5mm; line-height:1; text-shadow:0 3mm 14mm rgba(0,0,0,0.4); }
+.logo-tag   { font-size:14mm; color:rgba(255,255,255,0.8); font-weight:500; letter-spacing:0.8mm; }
+.team-block { text-align:right; display:flex; flex-direction:column; gap:3mm; }
+.team-badge { background:rgba(255,255,255,0.18); border:1mm solid rgba(255,255,255,0.35); border-radius:5mm; padding:3mm 8mm; font-size:12mm; font-weight:800; color:#fff; backdrop-filter:blur(4px); align-self:flex-end; }
+.team-names { font-size:11mm; color:rgba(255,255,255,0.85); font-weight:600; }
+.team-school{ font-size:10mm; color:rgba(255,200,255,0.8); font-weight:500; }
+
+/* ── GRID ── */
+.grid {
+  flex:1; display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto auto auto auto;
+  gap:6mm; overflow:hidden;
+}
+.span2 { grid-column:1/-1; }
+
+/* ── CARD ── */
+.card {
+  background:rgba(255,255,255,0.055);
+  border:1mm solid rgba(180,80,255,0.28);
+  border-radius:12mm; padding:9mm 11mm;
+  display:flex; flex-direction:column; gap:5mm;
+  backdrop-filter:blur(8px); position:relative; overflow:hidden;
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:0.5mm;
+  background:linear-gradient(90deg, transparent, rgba(200,100,255,0.6), transparent);
+}
+.c-red    { border-color:rgba(255,80,120,0.4);   background:rgba(200,20,80,0.08); }
+.c-violet { border-color:rgba(160,60,255,0.45);  background:rgba(100,0,220,0.1);  }
+.c-gold   { border-color:rgba(255,190,40,0.4);   background:rgba(180,100,0,0.1);  }
+.c-teal   { border-color:rgba(0,210,220,0.38);   background:rgba(0,120,160,0.1);  }
+.c-green  { border-color:rgba(0,220,120,0.38);   background:rgba(0,140,80,0.1);   }
+
+/* card header */
+.ch { display:flex; align-items:center; gap:5mm; flex-shrink:0; }
+.ch-icon { width:20mm; height:20mm; border-radius:6mm; display:flex; align-items:center; justify-content:center; font-size:12mm; flex-shrink:0; background:rgba(255,255,255,0.1); }
+.ch-title{ font-size:17mm; font-weight:800; color:#fff; line-height:1; }
+
+/* ── PROBLEM pills ── */
+.stat-pills { display:flex; flex-direction:column; gap:4mm; }
+.pill { background:rgba(255,255,255,0.07); border-left:4mm solid #e040fb; border-radius:0 6mm 6mm 0; padding:5mm 8mm; display:flex; align-items:center; gap:5mm; }
+.pill-icon { font-size:13mm; flex-shrink:0; }
+.pill-text { font-size:11mm; font-weight:600; color:#f0d8ff; line-height:1.3; }
+.pill-text strong { color:#fff; }
+
+/* ── SOLUTION flow ── */
+.flow { display:flex; flex-direction:column; gap:4mm; }
+.fstep { display:flex; align-items:center; gap:5mm; background:rgba(255,255,255,0.06); border-radius:7mm; padding:5mm 7mm; }
+.fnum  { width:16mm; height:16mm; border-radius:50%; background:linear-gradient(135deg,#9b30e8,#e040fb); color:#fff; font-size:10mm; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 2mm 6mm rgba(200,0,255,0.5); }
+.ftext { font-size:11mm; font-weight:600; color:#e8d0ff; line-height:1.3; }
+.ftext strong { color:#fff; }
+
+/* ── FEATURES grid ── */
+.feat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5mm; }
+.feat { background:rgba(255,255,255,0.07); border:1mm solid rgba(180,80,255,0.25); border-radius:8mm; padding:7mm 4mm 6mm; display:flex; flex-direction:column; align-items:center; gap:3mm; }
+.feat .fic { font-size:18mm; }
+.feat .flb { font-size:10mm; font-weight:700; color:#ddc8ff; text-align:center; line-height:1.2; }
+
+/* ── PROTOTYPE ── */
+.proto-row   { display:grid; grid-template-columns:1fr 1fr 1fr; gap:9mm; }
+.phone-wrap  { display:flex; flex-direction:column; align-items:center; gap:4mm; }
+.mini-phone  { width:100%; background:linear-gradient(165deg,#15002c 0%,#070010 100%); border:1.5mm solid rgba(158,70,255,0.55); border-radius:12mm; box-shadow:0 0 0 0.5mm rgba(200,130,255,0.18),0 6mm 22mm rgba(108,22,215,0.6); display:flex; flex-direction:column; overflow:hidden; }
+.mp-status   { padding:3mm 5mm 1mm; display:flex; align-items:center; position:relative; min-height:8mm; }
+.mp-time     { font-size:4mm; font-weight:800; color:rgba(255,255,255,0.92); font-family:ui-sans-serif,system-ui,sans-serif; }
+.mp-island   { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:16mm; height:3.2mm; background:#050009; border-radius:2.5mm; border:0.3mm solid rgba(130,55,215,0.4); }
+.mp-batt     { margin-left:auto; font-size:3.5mm; color:rgba(255,255,255,0.72); }
+.mp-screenshot { height:130mm; overflow:hidden; flex-shrink:0; }
+.screen-img  { width:100%; height:130mm; object-fit:cover; object-position:top center; display:block; }
+.mp-home     { width:22mm; height:1.5mm; background:rgba(255,255,255,0.28); border-radius:1mm; margin:3mm auto; }
+.mp-lbl      { font-size:9mm; font-weight:700; color:#c8a0f0; text-align:center; letter-spacing:0.2mm; }
+
+/* ── WHY US ── */
+.cmp-table { width:100%; border-collapse:separate; border-spacing:2mm; }
+.cmp-table th { font-size:11mm; font-weight:800; padding:4mm 6mm; border-radius:4mm; text-align:left; }
+.th-f  { background:rgba(255,255,255,0.08); color:#ccc; }
+.th-no { background:rgba(255,60,60,0.2);    color:#ffaaaa; }
+.th-yes{ background:rgba(40,220,120,0.2);   color:#90ffbb; }
+.cmp-table td { font-size:11mm; padding:4mm 6mm; border-radius:3mm; vertical-align:middle; line-height:1.35; }
+.cmp-table tr:nth-child(odd) td { background:rgba(255,255,255,0.04); }
+.td-f  { color:#ddc8ff; font-weight:600; }
+.td-no { color:#ff9090; text-align:center; font-size:12mm; }
+.td-yes{ color:#70ffaa; text-align:center; font-size:12mm; }
+
+/* ── IMPACT + SAFETY ── */
+.two-cols { display:grid; grid-template-columns:1fr 1fr; gap:5mm; }
+.impact-item { background:rgba(255,255,255,0.06); border-left:4mm solid #9b30e8; border-radius:0 6mm 6mm 0; padding:5mm 7mm; }
+.ii-title { font-size:12mm; font-weight:800; color:#f0d0ff; margin-bottom:2mm; }
+.ii-desc  { font-size:10mm; color:#c8a8f0; line-height:1.35; }
+.badge { background:rgba(0,200,100,0.08); border:1.5mm solid rgba(0,220,120,0.3); border-radius:6mm; padding:4mm 6mm; display:flex; align-items:center; gap:4mm; }
+.b-icon{ font-size:14mm; flex-shrink:0; }
+.b-text{ font-size:10mm; font-weight:700; color:#90ffcc; line-height:1.3; }
+
+/* ── EVENT FOOTER ── */
+.event-footer {
+  grid-column:1/-1;
+  background:linear-gradient(90deg,#5a10c0 0%,#b020d0 50%,#5a10c0 100%);
+  border-radius:10mm; padding:6mm 14mm;
+  display:flex; justify-content:space-between; align-items:center;
+  box-shadow:0 3mm 16mm rgba(160,0,255,0.45); flex-shrink:0;
+}
+.ef-left  { display:flex; flex-direction:column; gap:2mm; }
+.ef-title { font-size:20mm; font-weight:900; color:#fff; letter-spacing:0.5mm; }
+.ef-sub   { font-size:12mm; color:rgba(255,255,255,0.8); font-weight:500; }
+.ef-mid   { display:flex; flex-direction:column; align-items:center; }
+.ef-shield{ font-size:36mm; filter:drop-shadow(0 0 6mm rgba(255,255,255,0.3)); }
+.ef-right { text-align:right; display:flex; flex-direction:column; gap:3mm; }
+.ef-school{ font-size:13mm; font-weight:800; color:#fce8ff; }
+.ef-stack { font-size:10mm; color:rgba(255,255,255,0.7); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  flex-shrink:0; background:rgba(0,0,0,0.55);
+  border-top:1mm solid rgba(160,60,255,0.35);
+  padding:4mm 16mm; display:flex; justify-content:space-around; align-items:center;
+}
+.ni { display:flex; flex-direction:column; align-items:center; gap:2mm; }
+.ni-icon { font-size:14mm; }
+.ni-label{ font-size:8mm; font-weight:600; color:rgba(255,255,255,0.55); }
+.ni.on .ni-label { color:#d080ff; }
+.ni.on .ni-icon  { filter:drop-shadow(0 0 3mm #d080ff); }
+.home-bar  { flex-shrink:0; height:14mm; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); }
+.home-pill { width:42mm; height:3.5mm; background:rgba(255,255,255,0.4); border-radius:2mm; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"><div class="cam"></div><div class="spk"></div></div>
+
+  <div class="status">
+    <span>9:41</span>
+    <span>StudyWiseAI</span>
+    <div class="s-icons"><span>📶</span><span>🔋</span></div>
+  </div>
+
+  <div class="screen">
+
+    <!-- HEADER -->
+    <div class="app-header">
+      <div class="logo-block">
+        <div class="logo-name">StudyWiseAI</div>
+        <div class="logo-tag">🎓 &nbsp;Learning Smarter</div>
+      </div>
+      <div class="team-block">
+        <div class="team-badge">Team Wise Minds</div>
+        <div class="team-names">Adeeb Ahmed &amp; Mohamad Yousuf</div>
+        <div class="team-school">📍 Pristine Private School &nbsp;·&nbsp; SAFE AI CUP 2025</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- PROBLEM -->
+      <div class="card c-red">
+        <div class="ch"><div class="ch-icon">⚠️</div><span class="ch-title">The Problem</span></div>
+        <div class="stat-pills">
+          <div class="pill"><div class="pill-icon">😕</div><div class="pill-text">Students study with <strong>no career roadmap</strong></div></div>
+          <div class="pill"><div class="pill-icon">🔗</div><div class="pill-text"><strong>Disconnected tools</strong> — planners &amp; AI don't connect</div></div>
+          <div class="pill"><div class="pill-icon">💸</div><div class="pill-text">AI tutoring is <strong>expensive &amp; cloud-only</strong></div></div>
+          <div class="pill"><div class="pill-icon">📵</div><div class="pill-text">No internet? <strong>No access</strong> to any AI tools</div></div>
+        </div>
+      </div>
+
+      <!-- SOLUTION -->
+      <div class="card c-violet">
+        <div class="ch"><div class="ch-icon">💡</div><span class="ch-title">Our Solution</span></div>
+        <div class="flow">
+          <div class="fstep"><div class="fnum">1</div><div class="ftext">Enter your <strong>career goal</strong></div></div>
+          <div class="fstep"><div class="fnum">2</div><div class="ftext">AI asks <strong>3 personalised</strong> questions</div></div>
+          <div class="fstep"><div class="fnum">3</div><div class="ftext">Full <strong>Action Plan</strong> generated instantly</div></div>
+          <div class="fstep"><div class="fnum">4</div><div class="ftext">One tap → <strong>Planner &amp; Timer</strong></div></div>
+          <div class="fstep"><div class="fnum">5</div><div class="ftext"><strong>100% offline</strong> — free &amp; private forever</div></div>
+        </div>
+      </div>
+
+      <!-- FEATURES -->
+      <div class="card span2 c-teal">
+        <div class="ch"><div class="ch-icon">✨</div><span class="ch-title">Everything in One App</span></div>
+        <div class="feat-grid">
+          <div class="feat"><div class="fic">🎯</div><div class="flb">Career Goal</div></div>
+          <div class="feat"><div class="fic">🤖</div><div class="flb">AI Advisor</div></div>
+          <div class="feat"><div class="fic">📅</div><div class="flb">Study Plans</div></div>
+          <div class="feat"><div class="fic">📊</div><div class="flb">Progress</div></div>
+          <div class="feat"><div class="fic">⏱️</div><div class="flb">Pomodoro</div></div>
+          <div class="feat"><div class="fic">🗓️</div><div class="flb">Weekly Planner</div></div>
+          <div class="feat"><div class="fic">💬</div><div class="flb">AI Chat</div></div>
+          <div class="feat"><div class="fic">🧠</div><div class="flb">NLP Tools</div></div>
+        </div>
+      </div>
+
+      <!-- PROTOTYPE -->
+      <div class="card span2">
+        <div class="ch"><div class="ch-icon">📱</div><span class="ch-title">Working Prototype</span></div>
+        <div class="proto-row">
+          <div class="phone-wrap">
+            <div class="mini-phone">
+              <div class="mp-status">
+                <span class="mp-time">9:41</span>
+                <div class="mp-island"></div>
+                <span class="mp-batt">▪▪▪ ▮▮▮</span>
+              </div>
+              <div class="mp-screenshot">
+                <img src="screenshots/screen1_home.png" alt="Landing Page" class="screen-img">
+              </div>
+              <div class="mp-home"></div>
+            </div>
+            <div class="mp-lbl">Weekly Planner</div>
+          </div>
+          <div class="phone-wrap">
+            <div class="mini-phone">
+              <div class="mp-status">
+                <span class="mp-time">9:41</span>
+                <div class="mp-island"></div>
+                <span class="mp-batt">▪▪▪ ▮▮▮</span>
+              </div>
+              <div class="mp-screenshot">
+                <img src="screenshots/screen2_chat.png" alt="AI Study Assistant" class="screen-img">
+              </div>
+              <div class="mp-home"></div>
+            </div>
+            <div class="mp-lbl">AI Study Assistant</div>
+          </div>
+          <div class="phone-wrap">
+            <div class="mini-phone">
+              <div class="mp-status">
+                <span class="mp-time">9:41</span>
+                <div class="mp-island"></div>
+                <span class="mp-batt">▪▪▪ ▮▮▮</span>
+              </div>
+              <div class="mp-screenshot">
+                <img src="screenshots/screen3_career.png" alt="Career Counseling" class="screen-img">
+              </div>
+              <div class="mp-home"></div>
+            </div>
+            <div class="mp-lbl">Career Counseling</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHY US -->
+      <div class="card c-gold">
+        <div class="ch"><div class="ch-icon">⚡</div><span class="ch-title">Why StudyWiseAI?</span></div>
+        <table class="cmp-table">
+          <thead>
+            <tr><th class="th-f">Feature</th><th class="th-no">Others</th><th class="th-yes">Us</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="td-f">100% Free</td><td class="td-no">❌</td><td class="td-yes">✅</td></tr>
+            <tr><td class="td-f">Offline</td><td class="td-no">❌</td><td class="td-yes">✅</td></tr>
+            <tr><td class="td-f">Data Privacy</td><td class="td-no">❌</td><td class="td-yes">✅</td></tr>
+            <tr><td class="td-f">Career → Plan</td><td class="td-no">❌</td><td class="td-yes">✅</td></tr>
+            <tr><td class="td-f">All-in-One</td><td class="td-no">❌</td><td class="td-yes">✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- IMPACT + SAFETY -->
+      <div class="card c-green">
+        <div class="ch"><div class="ch-icon">🚀</div><span class="ch-title">Impact &amp; Safety</span></div>
+        <div class="two-cols">
+          <div class="impact-item"><div class="ii-title">🎯 Direction</div><div class="ii-desc">Personalised roadmap in seconds</div></div>
+          <div class="impact-item"><div class="ii-title">📶 Offline</div><div class="ii-desc">Works anywhere, anytime</div></div>
+          <div class="badge"><div class="b-icon">🔒</div><div class="b-text">All data stays on your device</div></div>
+          <div class="badge"><div class="b-icon">🤝</div><div class="b-text">AI guides — you decide</div></div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="event-footer">
+        <div class="ef-left">
+          <div class="ef-title">SAFE AI CUP 2025</div>
+          <div class="ef-sub">AI for Good — Empowering Every Student</div>
+          <div class="ef-sub">🇦🇪 &nbsp;United Arab Emirates</div>
+        </div>
+        <div class="ef-mid"><div class="ef-shield">🛡️</div></div>
+        <div class="ef-right">
+          <div class="ef-school">Pristine Private School</div>
+          <div class="ef-stack">FastAPI · React · GPT4All · Offline AI</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="ni on"><div class="ni-icon">🏠</div><div class="ni-label">Home</div></div>
+    <div class="ni">   <div class="ni-icon">🎯</div><div class="ni-label">Goals</div></div>
+    <div class="ni">   <div class="ni-icon">📅</div><div class="ni-label">Planner</div></div>
+    <div class="ni">   <div class="ni-icon">⏱️</div><div class="ni-label">Focus</div></div>
+    <div class="ni">   <div class="ni-icon">📊</div><div class="ni-label">Progress</div></div>
+  </div>
+  <div class="home-bar"><div class="home-pill"></div></div>
+</div>
+
+</body>
+</html>

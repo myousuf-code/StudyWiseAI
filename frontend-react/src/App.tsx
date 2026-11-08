@@ -13,6 +13,8 @@ import PomodoroModal from './components/study/PomodoroModal';
 import WeeklyPlannerModal from './components/study/WeeklyPlannerModal';
 import NLPModal from './components/ai/NLPModal';
 import CareerCounselingModal from './components/career/CareerCounselingModal';
+import AccessibilityModal from './components/accessibility/AccessibilityModal';
+import { AccessibilityProvider } from './context/AccessibilityContext';
 import StudyPlanDetailModal from './components/study/StudyPlanDetailModal';
 import Notification from './components/common/Notification';
 import type { Notification as NotificationType } from './types/index';
@@ -29,6 +31,8 @@ function App() {
   const [showPlanner, setShowPlanner] = useState(false);
   const [showNLP, setShowNLP] = useState(false);
   const [showCareerCounseling, setShowCareerCounseling] = useState(false);
+  const [showAccessibility, setShowAccessibility] = useState(false);
+  const [a11yInitialText, setA11yInitialText] = useState('');
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
   const [studyPlansLoading, setStudyPlansLoading] = useState(false);
@@ -93,6 +97,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <AccessibilityProvider>
       <AuthProvider>
         {selectedPlan && <StudyPlanDetailModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />}
         <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
@@ -102,6 +107,11 @@ function App() {
           onTabChange={setActiveTab}
           onLoginClick={() => setShowLogin(true)}
           onRegisterClick={() => setShowRegister(true)}
+          onA11yClick={() => {
+            const selected = window.getSelection()?.toString().trim() || '';
+            setA11yInitialText(selected);
+            setShowAccessibility(true);
+          }}
         />
 
         {/* Main Content based on Active Tab */}
@@ -594,6 +604,13 @@ function App() {
 
         {showNLP && <NLPModal onClose={() => setShowNLP(false)} />}
 
+        {showAccessibility && (
+          <AccessibilityModal
+            initialText={a11yInitialText}
+            onClose={() => setShowAccessibility(false)}
+          />
+        )}
+
         {showCareerCounseling && <CareerCounselingModal isOpen={showCareerCounseling} onClose={() => setShowCareerCounseling(false)} />}
 
         {/* Notifications */}
@@ -608,6 +625,7 @@ function App() {
         </div>
       </div>
       </AuthProvider>
+      </AccessibilityProvider>
     </ThemeProvider>
   );
 }

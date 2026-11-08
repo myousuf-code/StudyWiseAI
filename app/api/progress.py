@@ -3,11 +3,11 @@ Progress Tracking API Routes
 Monitor learning progress with analytics and insights
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -88,22 +88,24 @@ async def get_progress_records(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     subject: Optional[str] = None,
-    days: int = 30
+    days: int = 30,
+    skip: int = 0,
+    limit: int = 100
 ):
     """Get progress records for the current user"""
-    
+
     # Calculate date range
-    start_date = datetime.utcnow() - timedelta(days=days)
-    
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+
     query = db.query(ProgressRecord).filter(
         ProgressRecord.user_id == current_user.id,
         ProgressRecord.date >= start_date
     )
-    
+
     if subject:
         query = query.filter(ProgressRecord.subject == subject)
-    
-    records = query.order_by(desc(ProgressRecord.date)).all()
+
+    records = query.order_by(desc(ProgressRecord.date)).offset(skip).limit(limit).all()
     return records
 
 @router.get("/summary", response_model=ProgressSummary)
@@ -113,8 +115,8 @@ async def get_progress_summary(
     days: int = 30
 ):
     """Get comprehensive progress summary"""
-    
-    start_date = datetime.utcnow() - timedelta(days=days)
+
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
     
     # Get progress records
     records = db.query(ProgressRecord).filter(
@@ -165,17 +167,16 @@ async def get_analytics(
     period: str = "month"  # week, month, year
 ):
     """Get detailed analytics for progress visualization"""
-    
-    if period == "week":
-        days = 7
-    elif period == "month":
-        days = 30
-    elif period == "year":
-        days = 365
-    else:
-        days = 30
-    
-    start_date = datetime.utcnow() - timedelta(days=days)
+
+    VALID_PERIODS = {"week": 7, "month": 30, "year": 365}
+    if period not in VALID_PERIODS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid period '{period}'. Must be one of: week, month, year"
+        )
+    days = VALID_PERIODS[period]
+
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
     
     # Daily study time
     daily_time = db.query(
@@ -239,8 +240,8 @@ async def update_study_session(
             detail="Study session not found"
         )
     
-    # Update fields
-    for field, value in session_update.dict(exclude_none=True).items():
+    # Update only explicitly-provided fields
+    for field, value in session_update.model_dump(exclude_none=True).items():
         setattr(session, field, value)
     
     # Update status based on completion
@@ -251,15 +252,23 @@ async def update_study_session(
     db.refresh(session)
     
     # Create progress record if session is completed
+    # Eager-load study_plan to avoid N+1 query
     if session.status == "completed" and session.actual_duration:
+        from sqlalchemy.orm import joinedload
+        session_with_plan = db.query(StudySession).options(
+            joinedload(StudySession.study_plan)
+        ).filter(StudySession.id == session.id).first()
+        subject = session_with_plan.study_plan.subject if session_with_plan and session_with_plan.study_plan else "General"
+        difficulty = session_with_plan.study_plan.difficulty_level if session_with_plan and session_with_plan.study_plan else "intermediate"
+
         progress_record = ProgressRecord(
             user_id=current_user.id,
-            subject=session.study_plan.subject if session.study_plan else "General",
+            subject=subject,
             topic=session.title,
             time_spent=session.actual_duration,
             sessions_completed=1,
             accuracy_score=session_update.completion_rate,
-            difficulty_level="intermediate"  # Default
+            difficulty_level=difficulty
         )
         db.add(progress_record)
         db.commit()
@@ -269,7 +278,7 @@ async def update_study_session(
 # Helper functions
 def calculate_study_streak(user_id: int, db: Session) -> int:
     """Calculate current consecutive study days streak"""
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     streak = 0
     current_date = today
     

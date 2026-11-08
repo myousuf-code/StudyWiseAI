@@ -65,6 +65,9 @@ export interface CreateStudyPlanRequest {
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   estimated_duration: number;
   description?: string;
+  study_materials?: Record<string, unknown>;
+  schedule?: Record<string, unknown>;
+  milestones?: Record<string, unknown>;
 }
 
 // Study Session Types
@@ -82,16 +85,30 @@ export interface StudySession {
   completed: boolean;
 }
 
-// Progress Types
+// Progress Types — matches backend ProgressSummary response
 export interface ProgressStats {
+  total_study_time: number;      // minutes
   total_sessions: number;
-  total_time: number;
-  sessions_by_subject: Record<string, number>;
-  weekly_progress: number[];
+  subjects_studied: string[];
+  average_accuracy: number;
+  current_streak: number;        // days
+  weekly_progress: Array<{
+    week_start: string;
+    time_spent: number;
+    sessions: number;
+    subjects_count: number;
+  }>;
+  learning_trends: {
+    most_studied_subjects?: Array<[string, number]>;
+    study_consistency?: number;
+    average_session_length?: number;
+    total_subjects?: number;
+  };
 }
 
 // Chat Types
 export interface ChatMessage {
+  id?: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
@@ -99,7 +116,7 @@ export interface ChatMessage {
 
 export interface ChatRequest {
   message: string;
-  context?: string;
+  context?: Record<string, unknown>;  // matches backend Optional[Dict]
 }
 
 // Notification Types
